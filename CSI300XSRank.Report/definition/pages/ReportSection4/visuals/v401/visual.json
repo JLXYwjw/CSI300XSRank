@@ -1,0 +1,104 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "v401",
+  "layouts": [
+    {
+      "id": 0,
+      "position": {
+        "x": 0,
+        "y": 90,
+        "z": 0,
+        "width": 1280,
+        "height": 420,
+        "tabOrder": 0
+      }
+    }
+  ],
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_ic"
+                    }
+                  },
+                  "Property": "trade_date"
+                }
+              }
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_ic"
+                        }
+                      },
+                      "Property": "ic_neutral_ma20"
+                    }
+                  },
+                  "Function": 0
+                }
+              }
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_ic"
+                        }
+                      },
+                      "Property": "ic_style_ma20"
+                    }
+                  },
+                  "Function": 0
+                }
+              }
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": []
+      }
+    },
+    "objects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'滚动20日 IC：行业中性 vs 未中性化'"
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

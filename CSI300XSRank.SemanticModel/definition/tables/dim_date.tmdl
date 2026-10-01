@@ -1,0 +1,33 @@
+/// 日期维表
+table dim_date
+
+	column 'trade_date'
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: trade_date
+	column 'year'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: year
+	column 'quarter'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: quarter
+	column 'month'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: month
+	column 'year_month'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: year_month
+
+	partition dim_date = m
+		mode: import
+			source =
+				let
+					Source = Csv.Document(File.Contents(pCsvFolder & "dim_date.csv"), [Delimiter=",", Columns=5, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+					Typed = Table.TransformColumnTypes(Headered, {{"trade_date", type date}, {"year", Int64.Type}, {"quarter", Int64.Type}, {"month", Int64.Type}, {"year_month", type text}})
+				in
+					Typed

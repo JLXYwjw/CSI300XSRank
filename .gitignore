@@ -1,0 +1,24 @@
+# ── Python ───────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# ── 本机环境与项目记忆（不入库）─────────────────────
+.workbuddy/
+.env
+
+# ── 大表：只保留 .gz，原始 CSV 需解压后使用 ──────────
+#    见 README §6.1 第 2 步
+data/fact_crosssection.csv
+
+# ── Power BI Desktop 临时文件 ───────────────────────
+*.pbix
+~$*
+.DS_Store
+Thumbs.db
+
+# ── 临时探针脚本 ────────────────────────────────────
+_tmp_probe.py

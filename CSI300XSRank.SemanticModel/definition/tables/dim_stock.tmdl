@@ -1,0 +1,61 @@
+/// 股票维表：代码、名称、申万一级行业、地域、上市日
+table dim_stock
+
+	column 'ts_code'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ts_code
+	column 'name'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: name
+	column 'area'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: area
+	column 'industry'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: industry
+	column 'market'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: market
+	column 'list_date'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: list_date
+	column 'l1_name'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: l1_name
+	column 'l2_name'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: l2_name
+	column 'l3_name'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: l3_name
+	column 'first_date'
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: first_date
+	column 'last_date'
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: last_date
+	column 'days'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: days
+
+	partition dim_stock = m
+		mode: import
+			source =
+				let
+					Source = Csv.Document(File.Contents(pCsvFolder & "dim_stock.csv"), [Delimiter=",", Columns=12, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+					Typed = Table.TransformColumnTypes(Headered, {{"ts_code", type text}, {"name", type text}, {"area", type text}, {"industry", type text}, {"market", type text}, {"list_date", Int64.Type}, {"l1_name", type text}, {"l2_name", type text}, {"l3_name", type text}, {"first_date", type date}, {"last_date", type date}, {"days", Int64.Type}})
+				in
+					Typed

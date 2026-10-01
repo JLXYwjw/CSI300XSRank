@@ -1,0 +1,67 @@
+/// 逐交易日 IC 序列：合成分及各因子族对前瞻20日收益的 Spearman 秩相关
+table fact_ic
+
+	column 'trade_date'
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: trade_date
+	column 'n'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: n
+	column 'ic_neutral'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ic_neutral
+	column 'ic_style'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ic_style
+	column 'ic_o_trdmom'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ic_o_trdmom
+	column 'ic_o_val'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ic_o_val
+	column 'ic_o_lowvol'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ic_o_lowvol
+	column 'ic_o_rev'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ic_o_rev
+	column 'ic_neutral_ma20'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ic_neutral_ma20
+	column 'ic_style_ma20'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ic_style_ma20
+
+	measure 'IC均值' = AVERAGE('fact_ic'[ic_neutral])
+		formatString: 0.0000
+
+	measure 'IR(信息比率)' = DIVIDE(AVERAGE('fact_ic'[ic_neutral]), STDEV.S('fact_ic'[ic_neutral]))
+		formatString: 0.000
+
+	measure 'IC为正天数占比' =
+		DIVIDE(COUNTROWS(FILTER('fact_ic', 'fact_ic'[ic_neutral] > 0)), COUNTROWS('fact_ic'))
+		formatString: 0.0%
+
+	measure 't值' = [IR(信息比率)] * SQRT(COUNTROWS('fact_ic'))
+		formatString: 0.00
+
+
+	partition fact_ic = m
+		mode: import
+			source =
+				let
+					Source = Csv.Document(File.Contents(pCsvFolder & "fact_ic.csv"), [Delimiter=",", Columns=10, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+					Typed = Table.TransformColumnTypes(Headered, {{"trade_date", type date}, {"n", Int64.Type}, {"ic_neutral", type number}, {"ic_style", type number}, {"ic_o_trdmom", type number}, {"ic_o_val", type number}, {"ic_o_lowvol", type number}, {"ic_o_rev", type number}, {"ic_neutral_ma20", type number}, {"ic_style_ma20", type number}})
+				in
+					Typed

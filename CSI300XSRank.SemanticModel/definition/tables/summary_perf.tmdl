@@ -1,0 +1,45 @@
+/// 绩效汇总：各组合年化收益/波动/夏普/最大回撤/胜率
+table summary_perf
+
+	column '组合'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: 组合
+	column '最终净值'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: 最终净值
+	column '年化收益'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: 年化收益
+	column '年化波动'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: 年化波动
+	column '夏普'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: 夏普
+	column '最大回撤'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: 最大回撤
+	column '胜率'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: 胜率
+	column '年化超额'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: 年化超额
+
+	partition summary_perf = m
+		mode: import
+			source =
+				let
+					Source = Csv.Document(File.Contents(pCsvFolder & "summary_perf.csv"), [Delimiter=",", Columns=8, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+					Typed = Table.TransformColumnTypes(Headered, {{"组合", type text}, {"最终净值", type number}, {"年化收益", type number}, {"年化波动", type number}, {"夏普", type number}, {"最大回撤", type number}, {"胜率", type number}, {"年化超额", type number}})
+				in
+					Typed

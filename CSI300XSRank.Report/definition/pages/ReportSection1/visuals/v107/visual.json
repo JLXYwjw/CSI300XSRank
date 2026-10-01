@@ -1,0 +1,87 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "v107",
+  "layouts": [
+    {
+      "id": 0,
+      "position": {
+        "x": 650,
+        "y": 240,
+        "z": 0,
+        "width": 630,
+        "height": 420,
+        "tabOrder": 0
+      }
+    }
+  ],
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_ic_family"
+                    }
+                  },
+                  "Property": "signal_name"
+                }
+              }
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_ic_family"
+                        }
+                      },
+                      "Property": "ic"
+                    }
+                  },
+                  "Function": 0
+                }
+              }
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": []
+      }
+    },
+    "objects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'单因子 IC 对比'"
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

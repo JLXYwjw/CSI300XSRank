@@ -1,0 +1,41 @@
+/// 因子族字典：每一族由哪些字段构成、正交化顺序、经济含义
+table dim_family
+
+	column 'family_slug'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: family_slug
+	column 'family_name'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: family_name
+	column 'family_en'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: family_en
+	column 'n_features'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: n_features
+	column 'features'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: features
+	column 'ortho_order'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: ortho_order
+	column 'logic'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: logic
+
+	partition dim_family = m
+		mode: import
+			source =
+				let
+					Source = Csv.Document(File.Contents(pCsvFolder & "dim_family.csv"), [Delimiter=",", Columns=7, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+					Typed = Table.TransformColumnTypes(Headered, {{"family_slug", type text}, {"family_name", type text}, {"family_en", type text}, {"n_features", Int64.Type}, {"features", type text}, {"ortho_order", Int64.Type}, {"logic", type text}})
+				in
+					Typed

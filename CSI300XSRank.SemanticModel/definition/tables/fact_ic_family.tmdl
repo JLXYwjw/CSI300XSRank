@@ -1,0 +1,33 @@
+/// IC 长表：信号 x 日期，便于同一图内比较多条因子曲线
+table fact_ic_family
+
+	column 'trade_date'
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: trade_date
+	column 'signal'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: signal
+	column 'signal_name'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: signal_name
+	column 'ic'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ic
+	column 'ic_ma20'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ic_ma20
+
+	partition fact_ic_family = m
+		mode: import
+			source =
+				let
+					Source = Csv.Document(File.Contents(pCsvFolder & "fact_ic_family.csv"), [Delimiter=",", Columns=5, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+					Typed = Table.TransformColumnTypes(Headered, {{"trade_date", type date}, {"signal", type text}, {"signal_name", type text}, {"ic", type number}, {"ic_ma20", type number}})
+				in
+					Typed

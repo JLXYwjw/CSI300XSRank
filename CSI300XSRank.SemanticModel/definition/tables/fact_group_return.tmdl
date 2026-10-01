@@ -1,0 +1,62 @@
+/// 分层回测净值表：每5日调仓，Q1~Q5 及基准的期间收益与累计净值
+table fact_group_return
+
+	column 'trade_date'
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: trade_date
+	column 'group'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: group
+	column 'period_ret'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: period_ret
+	column 'bucket'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: bucket
+	column 'nav'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nav
+
+	measure '最终净值' = MAXX(VALUES('fact_group_return'[trade_date]), 0) + MAXX(
+		TOPN(1, 'fact_group_return', 'fact_group_return'[trade_date], DESC), 'fact_group_return'[nav])
+		formatString: 0.000
+
+	measure '调仓期数' = DISTINCTCOUNT('fact_group_return'[trade_date])
+		formatString: #,0
+
+	measure '年化收益' =
+		VAR FinalNav = MAXX(TOPN(1, 'fact_group_return', 'fact_group_return'[trade_date], DESC), 'fact_group_return'[nav])
+		VAR N = DISTINCTCOUNT('fact_group_return'[trade_date])
+		RETURN IF(N > 5, POWER(FinalNav, DIVIDE(48.6, N)) - 1)
+		formatString: 0.0%
+
+	measure '基准年化' =
+		CALCULATE([年化收益], REMOVEFILTERS('fact_group_return'[group]),
+			'fact_group_return'[group] = "基准 Benchmark")
+		formatString: 0.0%
+
+	measure '年化超额' = [年化收益] - [基准年化]
+		formatString: 0.0%
+
+	measure '最大回撤' =
+		VAR Body = ADDCOLUMNS(
+			SUMMARIZE('fact_group_return', 'fact_group_return'[trade_date]),
+			"nav", CALCULATE(MAX('fact_group_return'[nav])))
+		RETURN MINX(Body, DIVIDE([nav], MAXX(FILTER(Body, [trade_date] <= EARLIER([trade_date])), [nav])) - 1)
+		formatString: 0.0%
+
+
+	partition fact_group_return = m
+		mode: import
+			source =
+				let
+					Source = Csv.Document(File.Contents(pCsvFolder & "fact_group_return.csv"), [Delimiter=",", Columns=5, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+					Typed = Table.TransformColumnTypes(Headered, {{"trade_date", type date}, {"group", type text}, {"period_ret", type number}, {"bucket", Int64.Type}, {"nav", type number}})
+				in
+					Typed

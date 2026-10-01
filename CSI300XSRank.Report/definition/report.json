@@ -1,0 +1,40 @@
+{
+  "version": "4.0",
+  "themeCollection": {
+    "baseTheme": {
+      "name": "CY24SU06"
+    }
+  },
+  "activeSectionIndex": 0,
+  "sections": [
+    {
+      "id": 0,
+      "name": "ReportSection1",
+      "displayName": "1 结论摘要",
+      "filters": "[]"
+    },
+    {
+      "id": 1,
+      "name": "ReportSection2",
+      "displayName": "2 分层回测",
+      "filters": "[]"
+    },
+    {
+      "id": 2,
+      "name": "ReportSection3",
+      "displayName": "3 个股强弱",
+      "filters": "[]"
+    },
+    {
+      "id": 3,
+      "name": "ReportSection4",
+      "displayName": "4 因子诊断",
+      "filters": "[]"
+    }
+  ],
+  "settings": {},
+  "config": {},
+  "layoutOptimization": 0,
+  "publicCustomVisuals": [],
+  "resourcePackages": []
+}

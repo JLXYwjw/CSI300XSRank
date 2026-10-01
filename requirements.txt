@@ -1,0 +1,9 @@
+# CSI300XSRank 运行依赖
+# 已验证可运行的版本组合：Python 3.14 + pandas 3.0.3 + numpy 2.4.4 + scipy 1.18.0
+
+pandas>=2.0      # 面板数据处理：groupby / pivot / rank / qcut
+numpy>=1.24      # 矩阵运算：Gram-Schmidt 正交化
+scipy>=1.10      # Spearman 秩相关（IC 检验）
+
+# 注：本项目不依赖任何量化框架（无 qlib / tushare 运行时依赖）。
+#     上游 features_pooled.parquet 由独立的抓取流程产出，本仓库只消费它。

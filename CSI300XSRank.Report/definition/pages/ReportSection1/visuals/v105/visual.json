@@ -1,0 +1,66 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "v105",
+  "layouts": [
+    {
+      "id": 0,
+      "position": {
+        "x": 1000,
+        "y": 100,
+        "z": 0,
+        "width": 280,
+        "height": 120,
+        "tabOrder": 0
+      }
+    }
+  ],
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_crosssection"
+                    }
+                  },
+                  "Property": "截面样本行数"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": []
+      }
+    },
+    "objects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'截面样本总数'"
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

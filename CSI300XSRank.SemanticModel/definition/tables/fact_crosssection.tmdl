@@ -1,0 +1,199 @@
+/// 个股截面打分事实表：每个交易日每只股票一行，含合成分、排名分位、因子族得分
+table fact_crosssection
+
+	column 'ts_code'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ts_code
+	column 'trade_date'
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: trade_date
+	column 'alpha_neutral'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: alpha_neutral
+		formatString: 0.000
+	column 'alpha_raw'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: alpha_raw
+		formatString: 0.000
+	column 'score_style'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: score_style
+		formatString: 0.000
+	column 'rank_pct_neutral'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: rank_pct_neutral
+		formatString: 0.0
+	column 'rank_pct_style'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: rank_pct_style
+		formatString: 0.0
+	column 'rank_num'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: rank_num
+	column 'universe_size'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: universe_size
+	column 'bucket_neutral'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: bucket_neutral
+	column 'bucket_style'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: bucket_style
+	column 'bucket_label'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: bucket_label
+	column 'z_trdmom'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: z_trdmom
+	column 'z_val'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: z_val
+	column 'z_lowvol'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: z_lowvol
+	column 'z_rev'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: z_rev
+	column 'o_trdmom'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: o_trdmom
+	column 'o_val'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: o_val
+	column 'o_lowvol'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: o_lowvol
+	column 'o_rev'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: o_rev
+	column 'fwd_ret_1d'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: fwd_ret_1d
+	column 'fwd_ret_5d'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: fwd_ret_5d
+	column 'fwd_ret_10d'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: fwd_ret_10d
+	column 'fwd_ret_20d'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: fwd_ret_20d
+	column 'close_qfq'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: close_qfq
+	column 'ret_1d'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ret_1d
+	column 'ret_5d'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ret_5d
+	column 'ret_20d'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ret_20d
+	column 'ret_60d'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ret_60d
+	column 'ep_ttm'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ep_ttm
+	column 'bp'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: bp
+	column 'pb'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: pb
+	column 'dv_ttm'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: dv_ttm
+	column 'ps_ttm'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ps_ttm
+	column 'realized_vol_20d'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: realized_vol_20d
+	column 'atr_ratio'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: atr_ratio
+	column 'dist_ma20'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: dist_ma20
+	column 'macd_dif_ratio'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: macd_dif_ratio
+	column 'boll_pct_b'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: boll_pct_b
+	column 'rsi_12'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: rsi_12
+	column 'turnover_rate_f'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: turnover_rate_f
+	column 'log_total_mv'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: log_total_mv
+
+	measure '覆盖股票数' = DISTINCTCOUNT('fact_crosssection'[ts_code])
+		formatString: #,0
+
+	measure '截面样本行数' = COUNTROWS('fact_crosssection')
+		formatString: #,0
+
+	measure '平均合成分' = AVERAGE('fact_crosssection'[alpha_neutral])
+		formatString: 0.000
+
+	measure '平均排名分位' = AVERAGE('fact_crosssection'[rank_pct_neutral])
+		formatString: 0.0
+
+
+	partition fact_crosssection = m
+		mode: import
+			source =
+				let
+					Source = Csv.Document(File.Contents(pCsvFolder & "fact_crosssection.csv"), [Delimiter=",", Columns=42, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+					Typed = Table.TransformColumnTypes(Headered, {{"ts_code", type text}, {"trade_date", type date}, {"alpha_neutral", type number}, {"alpha_raw", type number}, {"score_style", type number}, {"rank_pct_neutral", type number}, {"rank_pct_style", type number}, {"rank_num", Int64.Type}, {"universe_size", Int64.Type}, {"bucket_neutral", type number}, {"bucket_style", type number}, {"bucket_label", type text}, {"z_trdmom", type number}, {"z_val", type number}, {"z_lowvol", type number}, {"z_rev", type number}, {"o_trdmom", type number}, {"o_val", type number}, {"o_lowvol", type number}, {"o_rev", type number}, {"fwd_ret_1d", type number}, {"fwd_ret_5d", type number}, {"fwd_ret_10d", type number}, {"fwd_ret_20d", type number}, {"close_qfq", type number}, {"ret_1d", type number}, {"ret_5d", type number}, {"ret_20d", type number}, {"ret_60d", type number}, {"ep_ttm", type number}, {"bp", type number}, {"pb", type number}, {"dv_ttm", type number}, {"ps_ttm", type number}, {"realized_vol_20d", type number}, {"atr_ratio", type number}, {"dist_ma20", type number}, {"macd_dif_ratio", type number}, {"boll_pct_b", type number}, {"rsi_12", type number}, {"turnover_rate_f", type number}, {"log_total_mv", type number}})
+				in
+					Typed

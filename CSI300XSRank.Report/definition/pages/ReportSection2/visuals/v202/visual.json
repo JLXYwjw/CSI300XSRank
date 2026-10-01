@@ -1,0 +1,138 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "v202",
+  "layouts": [
+    {
+      "id": 0,
+      "position": {
+        "x": 0,
+        "y": 490,
+        "z": 0,
+        "width": 1280,
+        "height": 560,
+        "tabOrder": 0
+      }
+    }
+  ],
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "summary_perf"
+                    }
+                  },
+                  "Property": "组合"
+                }
+              }
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "summary_perf"
+                    }
+                  },
+                  "Property": "最终净值"
+                }
+              }
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "summary_perf"
+                    }
+                  },
+                  "Property": "年化收益"
+                }
+              }
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "summary_perf"
+                    }
+                  },
+                  "Property": "年化超额"
+                }
+              }
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "summary_perf"
+                    }
+                  },
+                  "Property": "夏普"
+                }
+              }
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "summary_perf"
+                    }
+                  },
+                  "Property": "最大回撤"
+                }
+              }
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "summary_perf"
+                    }
+                  },
+                  "Property": "胜率"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": []
+      }
+    },
+    "objects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'回测绩效明细'"
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}
