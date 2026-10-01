@@ -24,6 +24,9 @@ import pandas as pd
 ROOT = r"D:\WorkBuddy\powerBI操作"
 CSV = os.path.join(ROOT, "data")
 PROJ = "CSI300XSRank"
+SCHEMA = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition"
+FABRIC = "https://developer.microsoft.com/json-schemas/fabric"
+LOGICAL_ID = "6f9d2a41-83c7-4b0e-9e15-2c47d8a3f6b1"
 SM_DIR = os.path.join(ROOT, f"{PROJ}.SemanticModel")
 RP_DIR = os.path.join(ROOT, f"{PROJ}.Report")
 
@@ -90,12 +93,12 @@ def table_tmdl(rel: str, desc: str, extra_cols: str = "") -> tuple[str, list[str
 
 def m_expr(rel: str, cols: list, types: dict) -> str:
     """Power Query M：读 CSV -> 提升表头 -> 强转类型"""
-    path = q(os.path.join(CSV, rel))
     tr = ", ".join(f'{{"{c}", {m_type(types[c])}}}' for c in cols)
+    # 路径走 pCsvFolder 参数而不是写死绝对路径 —— 换机器只改一处就能打开
     return (
         f'\t\t\tsource =\n'
         f'\t\t\t\tlet\n'
-        f'\t\t\t\t\tSource = Csv.Document(File.Contents("{path}"), '
+        f'\t\t\t\t\tSource = Csv.Document(File.Contents(pCsvFolder & "{rel}"), '
         f'[Delimiter=",", Columns={len(cols)}, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),\n'
         f'\t\t\t\t\tHeadered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),\n'
         f'\t\t\t\t\tTyped = Table.TransformColumnTypes(Headered, {{{tr}}})\n'
@@ -164,13 +167,38 @@ MEASURES = {
 }
 
 
+def write_platform(item_dir: str, kind: str) -> None:
+    """.platform 是 Fabric/Git 集成的身份标识文件，Desktop 开 PBIP 时必需。
+    logicalId 是 Fabric 里这个 item 的唯一身份，生成后不要再改。"""
+    with open(os.path.join(item_dir, ".platform"), "w", encoding="utf-8") as f:
+        json.dump({"$schema": f"{FABRIC}/gitIntegration/platformProperties/2.0.0/schema.json",
+                   "metadata": {"type": kind, "displayName": PROJ},
+                   "config": {"version": "2.0", "logicalId": LOGICAL_ID}},
+                  f, ensure_ascii=False, indent=2)
+
+
 def build_semantic_model() -> None:
     for d in (os.path.join(SM_DIR, "definition", "tables"),
               os.path.join(SM_DIR, "definition", "cultures")):
         os.makedirs(d, exist_ok=True)
 
     with open(os.path.join(SM_DIR, "definition.pbism"), "w", encoding="utf-8") as f:
-        json.dump({"version": "4.0", "settings": {}}, f, ensure_ascii=False, indent=2)
+        json.dump({"$schema": f"{FABRIC}/semanticModel/definitionProperties/1.0.0/schema.json",
+                   "version": "4.0", "settings": {}},
+                  f, ensure_ascii=False, indent=2)
+
+    write_platform(SM_DIR, "SemanticModel")
+
+    # pCsvFolder 参数：所有分区的 CSV 根目录，换机器只改这一处
+    with open(os.path.join(SM_DIR, "definition", "expressions.tmdl"), "w",
+              encoding="utf-8") as f:
+        f.write(
+            "/// 共享表达式：CSV 数据源根目录\n"
+            "/// 换机器时只需在这里改一处，全部表格的分区会自动跟着变\n"
+            "/// Power BI Desktop: 主页 -> 转换数据 -> 管理参数 -> pCsvFolder\n"
+            f'expression \'pCsvFolder\' = "{q(CSV) + os.sep}" '
+            "meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]\n"
+        )
 
     tables = ["fact_crosssection", "dim_stock", "dim_date", "dim_family",
               "fact_ic", "fact_group_return", "fact_ic_family", "summary_perf"]
@@ -373,9 +401,12 @@ def build_report() -> None:
         pdir = os.path.join(pages_dir, pname)
         os.makedirs(os.path.join(pdir, "visuals"), exist_ok=True)
         with open(os.path.join(pdir, "page.json"), "w", encoding="utf-8") as f:
-            json.dump({"$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.0.0/schema.json",
-                       "name": pname, "displayName": display, "displayOption": 1,
-                       "height": 1080, "width": 1280, "visualGroupsAW": 3200},
+            # PBIR 的 displayOption 是字符串枚举；旧版 Layout 用的数字 1 会导致
+            # 之后 Desktop 另存时格式不一致。visualGroupsAW 不在 page schema 里。
+            json.dump({"$schema": f"{SCHEMA}/page/2.0.0/schema.json",
+                       "name": pname, "displayName": display,
+                       "displayOption": "FitToPage",
+                       "height": 1080, "width": 1280},
                       f, ensure_ascii=False, indent=2)
         for v in vs_list:
             vdir = os.path.join(pdir, "visuals", v["name"])
@@ -384,14 +415,45 @@ def build_report() -> None:
                 json.dump(v, f, ensure_ascii=False, indent=2)
         print(f"  + pages/{pname}  ({len(vs_list)} 个视觉对象) - {display}")
 
+    # ── definition/version.json：PBIR 格式版本，Desktop 读 Report 时第一个找的就是它 ──
+    # 必须严格遵守 semver ^[0-9]*\.(0|[0-9]*)\.0$，写成 "4.0" 会被正则校验拦下。
+    with open(os.path.join(RP_DIR, "definition", "version.json"), "w", encoding="utf-8") as f:
+        json.dump({"$schema": f"{SCHEMA}/versionMetadata/1.0.0/schema.json",
+                   "version": "2.0.0"}, f, ensure_ascii=False, indent=2)
+    print("  + definition/version.json  (PBIR 格式版本，必需)")
+
+    # ── definition/pages/pages.json：页面顺序清单。缺了它 Desktop 不知道有哪几页 ──
+    with open(os.path.join(RP_DIR, "definition", "pages", "pages.json"), "w",
+              encoding="utf-8") as f:
+        json.dump({"$schema": f"{SCHEMA}/pagesMetadata/1.0.0/schema.json",
+                   "pageOrder": [p for p, _, _ in pages],
+                   "activePageName": pages[0][0]},
+                  f, ensure_ascii=False, indent=2)
+    print(f"  + definition/pages/pages.json  ({len(pages)} 页顺序清单)")
+
+    # ── definition/report.json：PBIR 的报告级配置 ──
+    # 注意：这里绝不能用旧版 Layout 格式（version/sections/activeSectionIndex），
+    # 那是 PBIR-Legacy，与 definition/pages/ 新格式混用会直接报错打不开。
     with open(os.path.join(RP_DIR, "definition", "report.json"), "w", encoding="utf-8") as f:
-        json.dump({"version": "4.0",
+        json.dump({"$schema": f"{SCHEMA}/report/3.1.0/schema.json",
                    "themeCollection": {"baseTheme": {"name": "CY24SU06"}},
-                   "activeSectionIndex": 0,
-                   "sections": [{"id": i, "name": p, "displayName": d, "filters": "[]"}
-                                for i, (p, d, _) in enumerate(pages)],
-                   "settings": {}, "config": {}, "layoutOptimization": 0,
-                   "publicCustomVisuals": [], "resourcePackages": []},
+                   "objects": {"section": [{"properties": {
+                       "verticalAlignment": {"expr": {"Literal": {"Value": "'Top'"}}}}}]},
+                   "settings": {"useStylableVisualContainerHeader": True,
+                                "exportDataMode": "AllowSummarized",
+                                "defaultDrillFilterOtherVisuals": True,
+                                "allowChangeFilterTypes": True,
+                                "useEnhancedTooltips": True,
+                                "useDefaultAggregateDisplayName": True}},
+                  f, ensure_ascii=False, indent=2)
+    print("  + definition/report.json  (PBIR 报告级配置)")
+
+    write_platform(RP_DIR, "Report")
+
+    with open(os.path.join(RP_DIR, "definition.pbir"), "w", encoding="utf-8") as f:
+        json.dump({"$schema": f"{FABRIC}/report/definitionProperties/2.0.0/schema.json",
+                   "version": "4.0",
+                   "datasetReference": {"byPath": {"path": f"../{PROJ}.SemanticModel"}}},
                   f, ensure_ascii=False, indent=2)
 
     with open(os.path.join(ROOT, f"{PROJ}.pbip"), "w", encoding="utf-8") as f:

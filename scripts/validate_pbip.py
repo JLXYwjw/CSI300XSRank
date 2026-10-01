@@ -121,11 +121,64 @@ print("   完成")
 # ---------- 4. PBIR 报表 ----------
 print("\n[4] PBIR 报表页")
 RPT = ROOT / "CSI300XSRank.Report"
+DEF_R = RPT / "definition"
+
+# ── PBIR 必需的四个文件：缺任何一个 Desktop 都打不开 ──
+print("  必需文件检查：")
+for rel, note in [("definition.pbir", "报表→语义模型绑定"),
+                  ("definition/version.json", "PBIR 格式版本"),
+                  ("definition/report.json", "报告级配置"),
+                  ("definition/pages/pages.json", "页面顺序清单"),
+                  (".platform", "Fabric/Git 身份标识")]:
+    p = RPT / rel
+    if p.exists():
+        try:
+            d = json.loads(p.read_text(encoding="utf-8-sig"))
+            extra = f"version={d.get('version','-')}" if isinstance(d, dict) and "version" in d else ""
+            ok(f"{rel:<32} {note}  {extra}")
+        except Exception as e:
+            bad(f"{rel} 解析失败: {e}"); issues.append(f"bad json {rel}")
+    else:
+        bad(f"{rel} 缺失 —— {note}"); issues.append(f"missing {rel}")
+
+# version.json 的 version 必须是 semver，写成 "4.0" 会被正则拦下
+vj = RPT / "definition" / "version.json"
+if vj.exists():
+    v = json.loads(vj.read_text(encoding="utf-8-sig")).get("version", "")
+    if not re.match(r"^[0-9]+\.(0|[0-9]+)\.0$", v or ""):
+        bad(f"version.json 的 version='{v}' 不符合 semver ^[0-9]+.(0|[0-9]+).0$")
+        issues.append("version.json semver")
+    else:
+        ok(f"version.json semver 格式合规 ({v})")
+
+# report.json 不能是旧的 Layout 格式（有 sections 数组 = PBIR-Legacy）
+rj = RPT / "definition" / "report.json"
+if rj.exists():
+    d = json.loads(rj.read_text(encoding="utf-8-sig"))
+    if "sections" in d or "activeSectionIndex" in d:
+        bad("report.json 是 PBIR-Legacy 格式(含 sections)，与 definition/pages/ 混用会打不开")
+        issues.append("report.json legacy")
+    else:
+        ok("report.json 是 PBIR 格式（无 sections 字段）")
+
 defi = RPT / "definition.pbir"
 if defi.exists():
     d = json.loads(defi.read_text(encoding="utf-8-sig"))
     bs = d.get("datasetReference", {})
-    print(f"   byPath={bs.get('byPath',{}).get('path') or bs.get('byConnection',{}).get('connectionString')}")
+    print(f"   datasetReference={bs.get('byPath',{}).get('path') or bs.get('byConnection',{}).get('connectionString')}")
+
+# pages.json 里声明的页必须与实际目录一一对应
+pj_path = DEF_R / "pages" / "pages.json"
+declared = []
+if pj_path.exists():
+    declared = json.loads(pj_path.read_text(encoding="utf-8-sig")).get("pageOrder", [])
+actual = [p.name for p in sorted((DEF_R / "pages").iterdir()) if p.is_dir()]
+if declared != actual:
+    bad(f"pages.json 声明 {declared} 与实际目录 {actual} 不一致")
+    issues.append("pages mismatch")
+else:
+    ok(f"pages.json 与页面目录一致 ({len(actual)} 页)")
+
 pages_dir = RPT / "definition" / "pages"
 for p in sorted(pages_dir.iterdir()):
     if not p.is_dir():

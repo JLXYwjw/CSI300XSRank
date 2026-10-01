@@ -236,7 +236,8 @@ df["alpha_neutral"] = ortho_means - df.groupby(["trade_date", "industry"])["orth
 ```
 CSI300XSRank.pbip                     ← 工程指针，Power BI Desktop 双击打开它
 ├── CSI300XSRank.SemanticModel/
-│   ├── definition.pbism
+│   ├── .platform                     ← Fabric/Git 身份标识（必需）
+│   ├── definition.pbism              ← 绑定到 item 元数据（必需）
 │   └── definition/
 │       ├── model.tmdl               ← 5 条关系
 │       ├── expressions.tmdl         ← 参数 pCsvFolder（唯一需要改的路径）
@@ -251,13 +252,25 @@ CSI300XSRank.pbip                     ← 工程指针，Power BI Desktop 双击
 │           ├── fact_ic_family.tmdl    分族 IC        9,210 行
 │           └── summary_perf.tmdl     绩效汇总          8 行
 └── CSI300XSRank.Report/
-    ├── definition.pbir
-    └── definition/pages/            ← 4 页 PBIR 报表，共 18 个视觉对象
-        ├── ReportSection1/  ① 结论摘要    5 个指标卡 + 2 个柱状图
-        ├── ReportSection2/  ② 分层回测    净值曲线 + 绩效表
-        ├── ReportSection3/  ③ 个股强弱    排名表 + 个股净值 + 行业分布
-        └── ReportSection4/  ④ 因子诊断    IC 曲线 + IC 汇总表
+    ├── .platform                     ← 同上（必需）
+    ├── definition.pbir               ← 报表 → 语义模型绑定（必需）
+    └── definition/
+        ├── version.json              ← PBIR 格式版本（必需，缺了直接打不开）
+        ├── report.json               ← 报告级配置：主题、对齐、导出策略
+        └── pages/                    ← 4 页 PBIR 报表，共 18 个视觉对象
+            ├── pages.json            ← 页面顺序清单（必需）
+            ├── ReportSection1/  ① 结论摘要    5 个指标卡 + 2 个柱状图
+            ├── ReportSection2/  ② 分层回测    净值曲线 + 绩效表
+            ├── ReportSection3/  ③ 个股强弱    排名表 + 个股净值 + 行业分布
+            └── ReportSection4/  ④ 因子诊断    IC 曲线 + IC 汇总表
 ```
+
+> **踩坑提醒**：`version.json` / `pages.json` / `.platform` 这三个文件极易漏掉，
+> 漏任何一个 Power BI Desktop 都会报 `Cannot find file 'version.json'`。
+> 另外 `report.json` 必须用 **PBIR 格式**（无 `sections` 字段）；
+> 写成旧版 Layout 格式（带 `version: 4.0` + `sections` 数组）与新格式混用同样打不开。
+> `version.json` 里的 `version` 必须满足 semver `^[0-9]+\.[0-9]+\.0$`，
+> 填 `"4.0"` 会被正则校验拦下。改完结构后跑 `python scripts/validate_pbip.py` 可一次性查全。
 
 **14 个 DAX 度量值**包括：`Q1年化收益` `超额收益` `夏普比率` `最大回撤` `当前排位%`
 `行业内排位` `IC均值` `IR(信息比率)` `IC为正天数占比` `t值` 等。
