@@ -20,5 +20,13 @@ data/fact_crosssection.csv
 .DS_Store
 Thumbs.db
 
+# ── Desktop 生成的本机目录（绝不入库）────────────────
+#    .pbi/cache.abf      本机数据缓存快照，最大可到上百 MB
+#    .pbi/localSettings.json  含 Windows DPAPI 加密的 securityBindingsSignature
+.pbi/
+
+# ── 求职策略文档（含简历写法 / 面试话术，不公开）────
+NEXT_STEPS.md
+
 # ── 临时探针脚本 ────────────────────────────────────
 _tmp_probe.py
