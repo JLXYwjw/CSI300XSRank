@@ -1,19 +1,14 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "v402",
-  "layouts": [
-    {
-      "id": 0,
-      "position": {
-        "x": 0,
-        "y": 530,
-        "z": 0,
-        "width": 1280,
-        "height": 480,
-        "tabOrder": 0
-      }
-    }
-  ],
+  "position": {
+    "x": 0,
+    "y": 530,
+    "z": 0,
+    "width": 1280,
+    "height": 480,
+    "tabOrder": 0
+  },
   "visual": {
     "visualType": "tableEx",
     "query": {
@@ -30,7 +25,8 @@
                   },
                   "Property": "family_name"
                 }
-              }
+              },
+              "queryRef": "Values.dim_family.family_name"
             },
             {
               "field": {
@@ -42,7 +38,8 @@
                   },
                   "Property": "family_en"
                 }
-              }
+              },
+              "queryRef": "Values.dim_family.family_en"
             },
             {
               "field": {
@@ -54,7 +51,8 @@
                   },
                   "Property": "n_features"
                 }
-              }
+              },
+              "queryRef": "Values.dim_family.n_features"
             },
             {
               "field": {
@@ -66,7 +64,8 @@
                   },
                   "Property": "features"
                 }
-              }
+              },
+              "queryRef": "Values.dim_family.features"
             },
             {
               "field": {
@@ -78,7 +77,8 @@
                   },
                   "Property": "logic"
                 }
-              }
+              },
+              "queryRef": "Values.dim_family.logic"
             }
           ]
         }

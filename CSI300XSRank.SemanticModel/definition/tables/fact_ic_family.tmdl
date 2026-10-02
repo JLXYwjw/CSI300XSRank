@@ -24,10 +24,10 @@ table fact_ic_family
 
 	partition fact_ic_family = m
 		mode: import
-			source =
-				let
-					Source = Csv.Document(File.Contents(pCsvFolder & "fact_ic_family.csv"), [Delimiter=",", Columns=5, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
-					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
-					Typed = Table.TransformColumnTypes(Headered, {{"trade_date", type date}, {"signal", type text}, {"signal_name", type text}, {"ic", type number}, {"ic_ma20", type number}})
-				in
-					Typed
+		source =
+			let
+				Source = Csv.Document(File.Contents(pCsvFolder & "fact_ic_family.csv"), [Delimiter=",", Columns=5, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				Typed = Table.TransformColumnTypes(Headered, {{"trade_date", type date}, {"signal", type text}, {"signal_name", type text}, {"ic", type number}, {"ic_ma20", type number}})
+			in
+				Typed

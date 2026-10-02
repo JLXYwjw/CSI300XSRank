@@ -1,19 +1,14 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "v100",
-  "layouts": [
-    {
-      "id": 0,
-      "position": {
-        "x": 0,
-        "y": 0,
-        "z": 0,
-        "width": 1280,
-        "height": 90,
-        "tabOrder": 0
-      }
-    }
-  ],
+  "position": {
+    "x": 0,
+    "y": 0,
+    "z": 0,
+    "width": 1280,
+    "height": 90,
+    "tabOrder": 0
+  },
   "visual": {
     "visualType": "textbox",
     "query": {
@@ -22,7 +17,63 @@
         "sort": []
       }
     },
-    "objects": {},
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "一、结论摘要：合成因子到底行不行",
+                    "textStyle": {
+                      "fontFamily": "'Segoe UI Semibold','wf_standard-font','Arial',sans-serif",
+                      "fontSize": "20pt",
+                      "bold": true,
+                      "color": {
+                        "solid": {
+                          "color": {
+                            "expr": {
+                              "Literal": {
+                                "Value": "'#0F172A'"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ],
+                "alignment": "left"
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "184 只沪深300成分股 / 2020-04-03 ~ 2026-08-31 / 310 次周频调仓；左四张卡为核心指标，右侧为分档收益与逐年对比",
+                    "textStyle": {
+                      "fontFamily": "'Segoe UI','wf_standard-font','Arial',sans-serif",
+                      "fontSize": "10pt",
+                      "color": {
+                        "solid": {
+                          "color": {
+                            "expr": {
+                              "Literal": {
+                                "Value": "'#64748B'"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ],
+                "alignment": "left"
+              }
+            ]
+          }
+        }
+      ]
+    },
     "drillFilterOtherVisuals": true
   }
 }

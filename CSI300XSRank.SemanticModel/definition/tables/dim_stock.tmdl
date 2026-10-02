@@ -52,10 +52,10 @@ table dim_stock
 
 	partition dim_stock = m
 		mode: import
-			source =
-				let
-					Source = Csv.Document(File.Contents(pCsvFolder & "dim_stock.csv"), [Delimiter=",", Columns=12, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
-					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
-					Typed = Table.TransformColumnTypes(Headered, {{"ts_code", type text}, {"name", type text}, {"area", type text}, {"industry", type text}, {"market", type text}, {"list_date", Int64.Type}, {"l1_name", type text}, {"l2_name", type text}, {"l3_name", type text}, {"first_date", type date}, {"last_date", type date}, {"days", Int64.Type}})
-				in
-					Typed
+		source =
+			let
+				Source = Csv.Document(File.Contents(pCsvFolder & "dim_stock.csv"), [Delimiter=",", Columns=12, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				Typed = Table.TransformColumnTypes(Headered, {{"ts_code", type text}, {"name", type text}, {"area", type text}, {"industry", type text}, {"market", type text}, {"list_date", Int64.Type}, {"l1_name", type text}, {"l2_name", type text}, {"l3_name", type text}, {"first_date", type date}, {"last_date", type date}, {"days", Int64.Type}})
+			in
+				Typed

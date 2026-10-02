@@ -24,10 +24,10 @@ table dim_date
 
 	partition dim_date = m
 		mode: import
-			source =
-				let
-					Source = Csv.Document(File.Contents(pCsvFolder & "dim_date.csv"), [Delimiter=",", Columns=5, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
-					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
-					Typed = Table.TransformColumnTypes(Headered, {{"trade_date", type date}, {"year", Int64.Type}, {"quarter", Int64.Type}, {"month", Int64.Type}, {"year_month", type text}})
-				in
-					Typed
+		source =
+			let
+				Source = Csv.Document(File.Contents(pCsvFolder & "dim_date.csv"), [Delimiter=",", Columns=5, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				Typed = Table.TransformColumnTypes(Headered, {{"trade_date", type date}, {"year", Int64.Type}, {"quarter", Int64.Type}, {"month", Int64.Type}, {"year_month", type text}})
+			in
+				Typed

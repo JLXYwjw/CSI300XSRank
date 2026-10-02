@@ -32,10 +32,10 @@ table dim_family
 
 	partition dim_family = m
 		mode: import
-			source =
-				let
-					Source = Csv.Document(File.Contents(pCsvFolder & "dim_family.csv"), [Delimiter=",", Columns=7, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
-					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
-					Typed = Table.TransformColumnTypes(Headered, {{"family_slug", type text}, {"family_name", type text}, {"family_en", type text}, {"n_features", Int64.Type}, {"features", type text}, {"ortho_order", Int64.Type}, {"logic", type text}})
-				in
-					Typed
+		source =
+			let
+				Source = Csv.Document(File.Contents(pCsvFolder & "dim_family.csv"), [Delimiter=",", Columns=7, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				Typed = Table.TransformColumnTypes(Headered, {{"family_slug", type text}, {"family_name", type text}, {"family_en", type text}, {"n_features", Int64.Type}, {"features", type text}, {"ortho_order", Int64.Type}, {"logic", type text}})
+			in
+				Typed

@@ -1,19 +1,14 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "v106",
-  "layouts": [
-    {
-      "id": 0,
-      "position": {
-        "x": 0,
-        "y": 240,
-        "z": 0,
-        "width": 640,
-        "height": 420,
-        "tabOrder": 0
-      }
-    }
-  ],
+  "position": {
+    "x": 0,
+    "y": 240,
+    "z": 0,
+    "width": 640,
+    "height": 420,
+    "tabOrder": 0
+  },
   "visual": {
     "visualType": "clusteredColumnChart",
     "query": {
@@ -30,7 +25,8 @@
                   },
                   "Property": "组合"
                 }
-              }
+              },
+              "queryRef": "Category.summary_perf.组合"
             }
           ]
         },
@@ -51,7 +47,8 @@
                   },
                   "Function": 0
                 }
-              }
+              },
+              "queryRef": "Y.Sum(summary_perf.年化收益)"
             }
           ]
         }

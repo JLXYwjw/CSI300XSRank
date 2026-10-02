@@ -1,4 +1,4 @@
 /// 共享表达式：CSV 数据源根目录
 /// 换机器时只需在这里改一处，全部表格的分区会自动跟着变
 /// Power BI Desktop: 主页 -> 转换数据 -> 管理参数 -> pCsvFolder
-expression 'pCsvFolder' = "D:\\WorkBuddy\\powerBI操作\\data\" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+expression 'pCsvFolder' = "D:/WorkBuddy/powerBI操作/data/" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]

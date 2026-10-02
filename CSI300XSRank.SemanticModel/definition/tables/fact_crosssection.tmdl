@@ -190,10 +190,10 @@ table fact_crosssection
 
 	partition fact_crosssection = m
 		mode: import
-			source =
-				let
-					Source = Csv.Document(File.Contents(pCsvFolder & "fact_crosssection.csv"), [Delimiter=",", Columns=42, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
-					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
-					Typed = Table.TransformColumnTypes(Headered, {{"ts_code", type text}, {"trade_date", type date}, {"alpha_neutral", type number}, {"alpha_raw", type number}, {"score_style", type number}, {"rank_pct_neutral", type number}, {"rank_pct_style", type number}, {"rank_num", Int64.Type}, {"universe_size", Int64.Type}, {"bucket_neutral", type number}, {"bucket_style", type number}, {"bucket_label", type text}, {"z_trdmom", type number}, {"z_val", type number}, {"z_lowvol", type number}, {"z_rev", type number}, {"o_trdmom", type number}, {"o_val", type number}, {"o_lowvol", type number}, {"o_rev", type number}, {"fwd_ret_1d", type number}, {"fwd_ret_5d", type number}, {"fwd_ret_10d", type number}, {"fwd_ret_20d", type number}, {"close_qfq", type number}, {"ret_1d", type number}, {"ret_5d", type number}, {"ret_20d", type number}, {"ret_60d", type number}, {"ep_ttm", type number}, {"bp", type number}, {"pb", type number}, {"dv_ttm", type number}, {"ps_ttm", type number}, {"realized_vol_20d", type number}, {"atr_ratio", type number}, {"dist_ma20", type number}, {"macd_dif_ratio", type number}, {"boll_pct_b", type number}, {"rsi_12", type number}, {"turnover_rate_f", type number}, {"log_total_mv", type number}})
-				in
-					Typed
+		source =
+			let
+				Source = Csv.Document(File.Contents(pCsvFolder & "fact_crosssection.csv"), [Delimiter=",", Columns=42, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				Typed = Table.TransformColumnTypes(Headered, {{"ts_code", type text}, {"trade_date", type date}, {"alpha_neutral", type number}, {"alpha_raw", type number}, {"score_style", type number}, {"rank_pct_neutral", type number}, {"rank_pct_style", type number}, {"rank_num", Int64.Type}, {"universe_size", Int64.Type}, {"bucket_neutral", type number}, {"bucket_style", type number}, {"bucket_label", type text}, {"z_trdmom", type number}, {"z_val", type number}, {"z_lowvol", type number}, {"z_rev", type number}, {"o_trdmom", type number}, {"o_val", type number}, {"o_lowvol", type number}, {"o_rev", type number}, {"fwd_ret_1d", type number}, {"fwd_ret_5d", type number}, {"fwd_ret_10d", type number}, {"fwd_ret_20d", type number}, {"close_qfq", type number}, {"ret_1d", type number}, {"ret_5d", type number}, {"ret_20d", type number}, {"ret_60d", type number}, {"ep_ttm", type number}, {"bp", type number}, {"pb", type number}, {"dv_ttm", type number}, {"ps_ttm", type number}, {"realized_vol_20d", type number}, {"atr_ratio", type number}, {"dist_ma20", type number}, {"macd_dif_ratio", type number}, {"boll_pct_b", type number}, {"rsi_12", type number}, {"turnover_rate_f", type number}, {"log_total_mv", type number}})
+			in
+				Typed

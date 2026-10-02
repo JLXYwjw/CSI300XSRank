@@ -1,19 +1,14 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "v302",
-  "layouts": [
-    {
-      "id": 0,
-      "position": {
-        "x": 440,
-        "y": 90,
-        "z": 0,
-        "width": 840,
-        "height": 440,
-        "tabOrder": 0
-      }
-    }
-  ],
+  "position": {
+    "x": 440,
+    "y": 90,
+    "z": 0,
+    "width": 840,
+    "height": 440,
+    "tabOrder": 0
+  },
   "visual": {
     "visualType": "lineChart",
     "query": {
@@ -30,7 +25,8 @@
                   },
                   "Property": "year_month"
                 }
-              }
+              },
+              "queryRef": "Category.dim_date.year_month"
             }
           ]
         },
@@ -51,7 +47,8 @@
                   },
                   "Function": 0
                 }
-              }
+              },
+              "queryRef": "Y.Sum(fact_crosssection.rank_pct_neutral)"
             }
           ]
         },
@@ -67,7 +64,8 @@
                   },
                   "Property": "name"
                 }
-              }
+              },
+              "queryRef": "Series.dim_stock.name"
             }
           ]
         }

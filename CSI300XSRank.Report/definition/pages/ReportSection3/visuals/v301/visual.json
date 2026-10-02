@@ -1,19 +1,14 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "v301",
-  "layouts": [
-    {
-      "id": 0,
-      "position": {
-        "x": 0,
-        "y": 90,
-        "z": 0,
-        "width": 420,
-        "height": 900,
-        "tabOrder": 0
-      }
-    }
-  ],
+  "position": {
+    "x": 0,
+    "y": 90,
+    "z": 0,
+    "width": 420,
+    "height": 900,
+    "tabOrder": 0
+  },
   "visual": {
     "visualType": "tableEx",
     "query": {
@@ -30,7 +25,8 @@
                   },
                   "Property": "name"
                 }
-              }
+              },
+              "queryRef": "Values.dim_stock.name"
             },
             {
               "field": {
@@ -42,7 +38,8 @@
                   },
                   "Property": "l1_name"
                 }
-              }
+              },
+              "queryRef": "Values.dim_stock.l1_name"
             },
             {
               "field": {
@@ -54,7 +51,8 @@
                   },
                   "Property": "平均合成分"
                 }
-              }
+              },
+              "queryRef": "Values.fact_crosssection.平均合成分"
             },
             {
               "field": {
@@ -66,7 +64,8 @@
                   },
                   "Property": "平均排名分位"
                 }
-              }
+              },
+              "queryRef": "Values.fact_crosssection.平均排名分位"
             }
           ]
         }

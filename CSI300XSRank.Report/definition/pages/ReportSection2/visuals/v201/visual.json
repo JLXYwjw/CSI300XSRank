@@ -1,19 +1,14 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "v201",
-  "layouts": [
-    {
-      "id": 0,
-      "position": {
-        "x": 0,
-        "y": 90,
-        "z": 0,
-        "width": 1280,
-        "height": 380,
-        "tabOrder": 0
-      }
-    }
-  ],
+  "position": {
+    "x": 0,
+    "y": 90,
+    "z": 0,
+    "width": 1280,
+    "height": 380,
+    "tabOrder": 0
+  },
   "visual": {
     "visualType": "lineChart",
     "query": {
@@ -30,7 +25,8 @@
                   },
                   "Property": "trade_date"
                 }
-              }
+              },
+              "queryRef": "Category.fact_group_return.trade_date"
             }
           ]
         },
@@ -51,7 +47,8 @@
                   },
                   "Function": 0
                 }
-              }
+              },
+              "queryRef": "Y.Sum(fact_group_return.nav)"
             }
           ]
         },
@@ -67,7 +64,8 @@
                   },
                   "Property": "group"
                 }
-              }
+              },
+              "queryRef": "Series.fact_group_return.group"
             }
           ]
         }

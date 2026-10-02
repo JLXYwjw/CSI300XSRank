@@ -36,10 +36,10 @@ table summary_perf
 
 	partition summary_perf = m
 		mode: import
-			source =
-				let
-					Source = Csv.Document(File.Contents(pCsvFolder & "summary_perf.csv"), [Delimiter=",", Columns=8, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
-					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
-					Typed = Table.TransformColumnTypes(Headered, {{"组合", type text}, {"最终净值", type number}, {"年化收益", type number}, {"年化波动", type number}, {"夏普", type number}, {"最大回撤", type number}, {"胜率", type number}, {"年化超额", type number}})
-				in
-					Typed
+		source =
+			let
+				Source = Csv.Document(File.Contents(pCsvFolder & "summary_perf.csv"), [Delimiter=",", Columns=8, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				Typed = Table.TransformColumnTypes(Headered, {{"组合", type text}, {"最终净值", type number}, {"年化收益", type number}, {"年化波动", type number}, {"夏普", type number}, {"最大回撤", type number}, {"胜率", type number}, {"年化超额", type number}})
+			in
+				Typed

@@ -49,7 +49,7 @@ table fact_ic
 		formatString: 0.000
 
 	measure 'IC为正天数占比' =
-		DIVIDE(COUNTROWS(FILTER('fact_ic', 'fact_ic'[ic_neutral] > 0)), COUNTROWS('fact_ic'))
+			DIVIDE(COUNTROWS(FILTER('fact_ic', 'fact_ic'[ic_neutral] > 0)), COUNTROWS('fact_ic'))
 		formatString: 0.0%
 
 	measure 't值' = [IR(信息比率)] * SQRT(COUNTROWS('fact_ic'))
@@ -58,10 +58,10 @@ table fact_ic
 
 	partition fact_ic = m
 		mode: import
-			source =
-				let
-					Source = Csv.Document(File.Contents(pCsvFolder & "fact_ic.csv"), [Delimiter=",", Columns=10, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
-					Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
-					Typed = Table.TransformColumnTypes(Headered, {{"trade_date", type date}, {"n", Int64.Type}, {"ic_neutral", type number}, {"ic_style", type number}, {"ic_o_trdmom", type number}, {"ic_o_val", type number}, {"ic_o_lowvol", type number}, {"ic_o_rev", type number}, {"ic_neutral_ma20", type number}, {"ic_style_ma20", type number}})
-				in
-					Typed
+		source =
+			let
+				Source = Csv.Document(File.Contents(pCsvFolder & "fact_ic.csv"), [Delimiter=",", Columns=10, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				Headered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				Typed = Table.TransformColumnTypes(Headered, {{"trade_date", type date}, {"n", Int64.Type}, {"ic_neutral", type number}, {"ic_style", type number}, {"ic_o_trdmom", type number}, {"ic_o_val", type number}, {"ic_o_lowvol", type number}, {"ic_o_rev", type number}, {"ic_neutral_ma20", type number}, {"ic_style_ma20", type number}})
+			in
+				Typed

@@ -3,9 +3,6 @@ model CSI300XSRank
 	defaultPowerBIDataSourceVersion: powerBI_V3
 	discourageImplicitMeasures: true
 	sourceQueryCulture: zh-CN
-	dataAccessOptions
-		legacyRedirects
-		returnErrorValuesAsNull
 
 relationship rel_stock_fact
 	fromColumn: fact_crosssection.ts_code

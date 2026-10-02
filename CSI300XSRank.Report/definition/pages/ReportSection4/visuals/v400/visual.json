@@ -1,19 +1,14 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "v400",
-  "layouts": [
-    {
-      "id": 0,
-      "position": {
-        "x": 0,
-        "y": 0,
-        "z": 0,
-        "width": 1280,
-        "height": 80,
-        "tabOrder": 0
-      }
-    }
-  ],
+  "position": {
+    "x": 0,
+    "y": 0,
+    "z": 0,
+    "width": 1280,
+    "height": 80,
+    "tabOrder": 0
+  },
   "visual": {
     "visualType": "textbox",
     "query": {
@@ -22,7 +17,63 @@
         "sort": []
       }
     },
-    "objects": {},
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "四、因子诊断：四族因子 IC 分解",
+                    "textStyle": {
+                      "fontFamily": "'Segoe UI Semibold','wf_standard-font','Arial',sans-serif",
+                      "fontSize": "20pt",
+                      "bold": true,
+                      "color": {
+                        "solid": {
+                          "color": {
+                            "expr": {
+                              "Literal": {
+                                "Value": "'#0F172A'"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ],
+                "alignment": "left"
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "趋势动量 / 价值 / 低波 / 反转 四族的滚动 IC 与 IC 均值对比；注意趋势动量 IC 显著为负",
+                    "textStyle": {
+                      "fontFamily": "'Segoe UI','wf_standard-font','Arial',sans-serif",
+                      "fontSize": "10pt",
+                      "color": {
+                        "solid": {
+                          "color": {
+                            "expr": {
+                              "Literal": {
+                                "Value": "'#64748B'"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ],
+                "alignment": "left"
+              }
+            ]
+          }
+        }
+      ]
+    },
     "drillFilterOtherVisuals": true
   }
 }

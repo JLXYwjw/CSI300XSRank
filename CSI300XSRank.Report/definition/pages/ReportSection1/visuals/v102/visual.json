@@ -1,19 +1,14 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "v102",
-  "layouts": [
-    {
-      "id": 0,
-      "position": {
-        "x": 250,
-        "y": 100,
-        "z": 0,
-        "width": 240,
-        "height": 120,
-        "tabOrder": 0
-      }
-    }
-  ],
+  "position": {
+    "x": 250,
+    "y": 100,
+    "z": 0,
+    "width": 240,
+    "height": 120,
+    "tabOrder": 0
+  },
   "visual": {
     "visualType": "card",
     "query": {
@@ -30,7 +25,8 @@
                   },
                   "Property": "IR(信息比率)"
                 }
-              }
+              },
+              "queryRef": "Values.fact_ic.IR(信息比率)"
             }
           ]
         }

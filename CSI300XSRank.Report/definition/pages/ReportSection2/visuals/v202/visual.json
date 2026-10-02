@@ -1,19 +1,14 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "v202",
-  "layouts": [
-    {
-      "id": 0,
-      "position": {
-        "x": 0,
-        "y": 490,
-        "z": 0,
-        "width": 1280,
-        "height": 560,
-        "tabOrder": 0
-      }
-    }
-  ],
+  "position": {
+    "x": 0,
+    "y": 490,
+    "z": 0,
+    "width": 1280,
+    "height": 560,
+    "tabOrder": 0
+  },
   "visual": {
     "visualType": "tableEx",
     "query": {
@@ -30,7 +25,8 @@
                   },
                   "Property": "组合"
                 }
-              }
+              },
+              "queryRef": "Values.summary_perf.组合"
             },
             {
               "field": {
@@ -42,7 +38,8 @@
                   },
                   "Property": "最终净值"
                 }
-              }
+              },
+              "queryRef": "Values.summary_perf.最终净值"
             },
             {
               "field": {
@@ -54,7 +51,8 @@
                   },
                   "Property": "年化收益"
                 }
-              }
+              },
+              "queryRef": "Values.summary_perf.年化收益"
             },
             {
               "field": {
@@ -66,7 +64,8 @@
                   },
                   "Property": "年化超额"
                 }
-              }
+              },
+              "queryRef": "Values.summary_perf.年化超额"
             },
             {
               "field": {
@@ -78,7 +77,8 @@
                   },
                   "Property": "夏普"
                 }
-              }
+              },
+              "queryRef": "Values.summary_perf.夏普"
             },
             {
               "field": {
@@ -90,7 +90,8 @@
                   },
                   "Property": "最大回撤"
                 }
-              }
+              },
+              "queryRef": "Values.summary_perf.最大回撤"
             },
             {
               "field": {
@@ -102,7 +103,8 @@
                   },
                   "Property": "胜率"
                 }
-              }
+              },
+              "queryRef": "Values.summary_perf.胜率"
             }
           ]
         }

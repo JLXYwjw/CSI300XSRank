@@ -1,19 +1,14 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "v200",
-  "layouts": [
-    {
-      "id": 0,
-      "position": {
-        "x": 0,
-        "y": 0,
-        "z": 0,
-        "width": 1280,
-        "height": 80,
-        "tabOrder": 0
-      }
-    }
-  ],
+  "position": {
+    "x": 0,
+    "y": 0,
+    "z": 0,
+    "width": 1280,
+    "height": 80,
+    "tabOrder": 0
+  },
   "visual": {
     "visualType": "textbox",
     "query": {
@@ -22,7 +17,63 @@
         "sort": []
       }
     },
-    "objects": {},
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "二、分层回测：五档分组净值曲线",
+                    "textStyle": {
+                      "fontFamily": "'Segoe UI Semibold','wf_standard-font','Arial',sans-serif",
+                      "fontSize": "20pt",
+                      "bold": true,
+                      "color": {
+                        "solid": {
+                          "color": {
+                            "expr": {
+                              "Literal": {
+                                "Value": "'#0F172A'"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ],
+                "alignment": "left"
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "按合成因子横截面排序分 Q1~Q5，等权持有、周频调仓；下表为各档年化 / 夏普 / 最大回撤",
+                    "textStyle": {
+                      "fontFamily": "'Segoe UI','wf_standard-font','Arial',sans-serif",
+                      "fontSize": "10pt",
+                      "color": {
+                        "solid": {
+                          "color": {
+                            "expr": {
+                              "Literal": {
+                                "Value": "'#64748B'"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ],
+                "alignment": "left"
+              }
+            ]
+          }
+        }
+      ]
+    },
     "drillFilterOtherVisuals": true
   }
 }

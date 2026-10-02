@@ -79,6 +79,49 @@ for f in sorted(TMDL_DIR.glob("*.tmdl")):
     if n_mea:
         print(f"   度量值: {f.stem} -> {n_mea} 个")
 
+# ---------- 2b. TMDL 缩进合法性 ----------
+# TMDL 的缩进是语法，不是排版。Desktop 报 "Indentation / 侦测到无效缩进" 时
+# 十有八九是下面这两条之一：
+#   ① 层级一次跳了 2 层以上 —— 但 `xxx =` 收尾的行除外：多行值本来就要跳过属性层
+#   ② 标量属性（xxx: yyy）后面跟了更深一层的子行 —— 标量没有子对象
+#   ③ `xxx =` 以等号收尾，下一行必须更深，否则多行值没有内容
+# 出 bug 的那次就是 source = 比它的兄弟 mode: 多缩进了一层（违反 ②）。
+print("\n[2b] TMDL 缩进合法性")
+_SCALAR = re.compile(r"^\t*([A-Za-z][A-Za-z0-9_.]*)\s*:")
+_indent_bad = 0
+_scan_root = ROOT / "CSI300XSRank.SemanticModel" / "definition"
+for f in sorted(_scan_root.rglob("*.tmdl")):
+    rows = []
+    for n, line in enumerate(f.read_text(encoding="utf-8-sig").split("\n"), 1):
+        if not line.strip() or line.lstrip().startswith("///"):
+            continue                       # 空行与 /// 注释不占层级
+        ind = len(line) - len(line.lstrip("\t"))
+        if line[:ind].replace("\t", "") != "":
+            bad(f"{f.name} 行{n} 缩进混用了空格"); issues.append("space indent")
+            continue
+        rows.append((n, ind, line.rstrip()))
+    for k in range(len(rows) - 1):
+        n, ind, txt = rows[k]
+        nn, nind, ntxt = rows[k + 1]
+        opens_block = txt.endswith("=")     # `xxx =` 后面接的是多行值，允许跨层
+        if nind > ind + 1 and not opens_block:
+            bad(f"{f.name} 行{nn} 层级一次跳了 {nind - ind} 层: {ntxt.strip()[:50]}")
+            issues.append("tmdl indent")
+            _indent_bad += 1
+        if opens_block and nind <= ind:
+            bad(f"{f.name} 行{nn} '{txt.strip()[:40]}' 以等号结尾，"
+                f"下一行没有更深缩进的多行值")
+            issues.append("tmdl indent")
+            _indent_bad += 1
+        m = _SCALAR.match("\t" * ind + txt.strip())
+        if m and nind > ind:
+            bad(f"{f.name} 行{nn} 标量属性 '{m.group(1)}' 后面不能有更深的子行:\n"
+                f"        {ntxt.strip()[:60]}")
+            issues.append("tmdl indent")
+            _indent_bad += 1
+if not _indent_bad:
+    ok(f"{len(list(TMDL_DIR.rglob('*.tmdl')))} 个 tmdl 文件缩进层级合法")
+
 # ---------- 3. 悬挂引用检测 ----------
 print("\n[3] 悬挂引用检测（关系 / 度量值引用的表列是否存在）")
 model_tmdl = (ROOT / "CSI300XSRank.SemanticModel" / "definition" / "model.tmdl")
@@ -141,7 +184,53 @@ for rel, note in [("definition.pbir", "报表→语义模型绑定"),
     else:
         bad(f"{rel} 缺失 —— {note}"); issues.append(f"missing {rel}")
 
-# version.json 的 version 必须是 semver，写成 "4.0" 会被正则拦下
+# ── $schema 前缀白名单 ──
+# Desktop 校验 $schema 用固定正则，写错一个字符就抛 UnrecognizedSchemaVersion 打不开。
+# 下面这 6 个前缀是从 Microsoft.PowerBI.Packaging.dll 的内嵌字符串里挖出来的，
+# 是 Desktop 自己的 ground truth，不要凭印象改。
+print("  $schema 前缀校验：")
+FABRIC = "https://developer.microsoft.com/json-schemas/fabric"
+ALLOWED_PREFIX = (
+    f"{FABRIC}/item/report/definition/",            # + {part}/{ver}/schema.json
+    f"{FABRIC}/item/report/definitionProperties/",
+    f"{FABRIC}/item/report/localSettings/",
+    f"{FABRIC}/item/semanticModel/",                # definitionProperties / copilot / localSettings ...
+    f"{FABRIC}/item/version/",
+    f"{FABRIC}/gitIntegration/platformProperties/",
+    f"{FABRIC}/pbip/pbipProperties/",
+)
+SCHEMA_TAIL = re.compile(
+    r"^([A-Za-z]+/)?[0-9]+\.[0-9]+\.[0-9]+/schema\.json$")   # 可选 {part}/ 段 + x.y.z + schema.json
+
+_sm = ROOT / "CSI300XSRank.SemanticModel"
+_schema_targets = [RPT / "definition.pbir", RPT / ".platform",
+                   DEF_R / "version.json", DEF_R / "report.json",
+                   DEF_R / "pages" / "pages.json",
+                   _sm / "definition.pbism", _sm / ".platform"]
+_schema_targets += sorted((DEF_R / "pages").glob("*/page.json"))
+_schema_targets += sorted((DEF_R / "pages").glob("*/visuals/*/visual.json"))
+
+for p in _schema_targets:
+    if not p.exists():
+        continue
+    try:
+        d = json.loads(p.read_text(encoding="utf-8-sig"))
+    except Exception:
+        continue
+    s = d.get("$schema") if isinstance(d, dict) else None
+    if s is None:
+        continue                      # 顶层 .pbip 等文件无 $schema，属正常
+    pre = next((a for a in ALLOWED_PREFIX if s.startswith(a)), None)
+    if pre is None:
+        bad(f"{p.relative_to(ROOT)} 的 $schema 前缀不被 Desktop 接受:\n      {s}")
+        issues.append(f"bad $schema {p.name}")
+    else:
+        tail = s[len(pre):]
+        if not SCHEMA_TAIL.match(tail):
+            bad(f"{p.relative_to(ROOT)} 的 $schema 版本号不是 x.y.z:\n      {s}")
+            issues.append(f"bad $schema version {p.name}")
+if not any("bad $schema" in i for i in issues):
+    ok(f"{len(_schema_targets)} 个文件的 $schema 全部通过")
 vj = RPT / "definition" / "version.json"
 if vj.exists():
     v = json.loads(vj.read_text(encoding="utf-8-sig")).get("version", "")

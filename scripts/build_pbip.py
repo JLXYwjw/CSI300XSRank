@@ -95,15 +95,17 @@ def m_expr(rel: str, cols: list, types: dict) -> str:
     """Power Query M：读 CSV -> 提升表头 -> 强转类型"""
     tr = ", ".join(f'{{"{c}", {m_type(types[c])}}}' for c in cols)
     # 路径走 pCsvFolder 参数而不是写死绝对路径 —— 换机器只改一处就能打开
+    # 缩进是 TMDL 的语法而不是排版：每层恰好 1 个 tab，多一个少一个都报 Indentation 错误。
+    # partition 在 1 层，它的属性(mode/source)必须在 2 层，M 代码作为 source 的多行值再深 1 层。
     return (
-        f'\t\t\tsource =\n'
-        f'\t\t\t\tlet\n'
-        f'\t\t\t\t\tSource = Csv.Document(File.Contents(pCsvFolder & "{rel}"), '
+        f'\t\tsource =\n'
+        f'\t\t\tlet\n'
+        f'\t\t\t\tSource = Csv.Document(File.Contents(pCsvFolder & "{rel}"), '
         f'[Delimiter=",", Columns={len(cols)}, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),\n'
-        f'\t\t\t\t\tHeadered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),\n'
-        f'\t\t\t\t\tTyped = Table.TransformColumnTypes(Headered, {{{tr}}})\n'
-        f'\t\t\t\tin\n'
-        f'\t\t\t\t\tTyped'
+        f'\t\t\t\tHeadered = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),\n'
+        f'\t\t\t\tTyped = Table.TransformColumnTypes(Headered, {{{tr}}})\n'
+        f'\t\t\tin\n'
+        f'\t\t\t\tTyped'
     )
 
 
@@ -122,32 +124,33 @@ MEASURES = {
 		formatString: 0.0
 """,
     "fact_group_return": """
-	measure '最终净值' = MAXX(VALUES('fact_group_return'[trade_date]), 0) + MAXX(
-		TOPN(1, 'fact_group_return', 'fact_group_return'[trade_date], DESC), 'fact_group_return'[nav])
+	measure '最终净值' =
+			MAXX(VALUES('fact_group_return'[trade_date]), 0) + MAXX(
+				TOPN(1, 'fact_group_return', 'fact_group_return'[trade_date], DESC), 'fact_group_return'[nav])
 		formatString: 0.000
 
 	measure '调仓期数' = DISTINCTCOUNT('fact_group_return'[trade_date])
 		formatString: #,0
 
 	measure '年化收益' =
-		VAR FinalNav = MAXX(TOPN(1, 'fact_group_return', 'fact_group_return'[trade_date], DESC), 'fact_group_return'[nav])
-		VAR N = DISTINCTCOUNT('fact_group_return'[trade_date])
-		RETURN IF(N > 5, POWER(FinalNav, DIVIDE(48.6, N)) - 1)
+			VAR FinalNav = MAXX(TOPN(1, 'fact_group_return', 'fact_group_return'[trade_date], DESC), 'fact_group_return'[nav])
+			VAR N = DISTINCTCOUNT('fact_group_return'[trade_date])
+			RETURN IF(N > 5, POWER(FinalNav, DIVIDE(48.6, N)) - 1)
 		formatString: 0.0%
 
 	measure '基准年化' =
-		CALCULATE([年化收益], REMOVEFILTERS('fact_group_return'[group]),
-			'fact_group_return'[group] = "基准 Benchmark")
+			CALCULATE([年化收益], REMOVEFILTERS('fact_group_return'[group]),
+				'fact_group_return'[group] = "基准 Benchmark")
 		formatString: 0.0%
 
 	measure '年化超额' = [年化收益] - [基准年化]
 		formatString: 0.0%
 
 	measure '最大回撤' =
-		VAR Body = ADDCOLUMNS(
-			SUMMARIZE('fact_group_return', 'fact_group_return'[trade_date]),
-			"nav", CALCULATE(MAX('fact_group_return'[nav])))
-		RETURN MINX(Body, DIVIDE([nav], MAXX(FILTER(Body, [trade_date] <= EARLIER([trade_date])), [nav])) - 1)
+			VAR Body = ADDCOLUMNS(
+				SUMMARIZE('fact_group_return', 'fact_group_return'[trade_date]),
+				"nav", CALCULATE(MAX('fact_group_return'[nav])))
+			RETURN MINX(Body, DIVIDE([nav], MAXX(FILTER(Body, [trade_date] <= EARLIER([trade_date])), [nav])) - 1)
 		formatString: 0.0%
 """,
     "fact_ic": """
@@ -158,7 +161,7 @@ MEASURES = {
 		formatString: 0.000
 
 	measure 'IC为正天数占比' =
-		DIVIDE(COUNTROWS(FILTER('fact_ic', 'fact_ic'[ic_neutral] > 0)), COUNTROWS('fact_ic'))
+			DIVIDE(COUNTROWS(FILTER('fact_ic', 'fact_ic'[ic_neutral] > 0)), COUNTROWS('fact_ic'))
 		formatString: 0.0%
 
 	measure 't值' = [IR(信息比率)] * SQRT(COUNTROWS('fact_ic'))
@@ -183,7 +186,7 @@ def build_semantic_model() -> None:
         os.makedirs(d, exist_ok=True)
 
     with open(os.path.join(SM_DIR, "definition.pbism"), "w", encoding="utf-8") as f:
-        json.dump({"$schema": f"{FABRIC}/semanticModel/definitionProperties/1.0.0/schema.json",
+        json.dump({"$schema": f"{FABRIC}/item/semanticModel/definitionProperties/1.0.0/schema.json",
                    "version": "4.0", "settings": {}},
                   f, ensure_ascii=False, indent=2)
 
@@ -196,7 +199,10 @@ def build_semantic_model() -> None:
             "/// 共享表达式：CSV 数据源根目录\n"
             "/// 换机器时只需在这里改一处，全部表格的分区会自动跟着变\n"
             "/// Power BI Desktop: 主页 -> 转换数据 -> 管理参数 -> pCsvFolder\n"
-            f'expression \'pCsvFolder\' = "{q(CSV) + os.sep}" '
+            # 整条路径改成正斜杠并去掉任何反斜杠：
+            # ① M/TMDL 字符串里 \ 是转义符，以反斜杠结尾会把结束引号吃掉，整行变成未闭合字符串
+            # ② \\ 是否会被还原成单个 \ 也说不清；索性一个 \ 都不用，Windows 与 File.Contents 都认 /
+            f'expression \'pCsvFolder\' = "{CSV.replace(os.sep, chr(47)).rstrip(chr(47))}/" '
             "meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]\n"
         )
 
@@ -219,9 +225,6 @@ def build_semantic_model() -> None:
         "\tdefaultPowerBIDataSourceVersion: powerBI_V3",
         "\tdiscourageImplicitMeasures: true",
         "\tsourceQueryCulture: zh-CN",
-        "\tdataAccessOptions",
-        "\t\tlegacyRedirects",
-        "\t\treturnErrorValuesAsNull",
         "",
     ]
 
@@ -279,11 +282,84 @@ def agg_ref(entity: str, prop: str, fn: str) -> dict:
         "Function": fn}}}
 
 
+def textbox(name: str, x: int, y: int, w: int, h: int,
+            main: str, sub: str = "") -> dict:
+    """textbox 视觉。objects 在 schema 里是自由格式(DataViewObjectDefinitions)，
+    所以 paragraphs 不会被 schema 拦；不写就只能看到一个空白方块。"""
+    runs = [{"value": main,
+             "textStyle": {"fontFamily": "'Segoe UI Semibold','wf_standard-font','Arial',sans-serif",
+                           "fontSize": "20pt", "bold": True,
+                           "color": {"solid": {"color": {
+                               "expr": {"Literal": {"Value": "'#0F172A'"}}}}}}}]
+    paras = [{"textRuns": runs, "alignment": "left"}]
+    if sub:
+        paras.append({"textRuns": [
+            {"value": sub,
+             "textStyle": {"fontFamily": "'Segoe UI','wf_standard-font','Arial',sans-serif",
+                           "fontSize": "10pt",
+                           "color": {"solid": {"color": {
+                               "expr": {"Literal": {"Value": "'#64748B'"}}}}}}}],
+            "alignment": "left"})
+    return {
+        "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+        "name": name,
+        "position": {"x": x, "y": y, "z": 0, "width": w, "height": h, "tabOrder": 0},
+        "visual": {
+            "visualType": "textbox",
+            "query": {"queryState": {}, "sortDefinition": {"sort": []}},
+            "objects": {"general": [{"properties": {"paragraphs": paras}}]},
+            "drillFilterOtherVisuals": True,
+        },
+    }
+
+
+def _ref_base(item: dict, fallback: str) -> str:
+    """从 projection 的 field 里抽出可读基名，用于生成 queryRef。"""
+    fld = item.get("field", {})
+    try:
+        if "Measure" in fld:
+            m = fld["Measure"]
+            return "{}.{}".format(m["Expression"]["SourceRef"]["Entity"], m["Property"])
+        if "Aggregation" in fld:
+            a = fld["Aggregation"]
+            c = a["Expression"]["Column"]
+            # Function 是数字枚举：0=Sum 1=Average 2=DistinctCount 3=Min
+            # 4=Max 5=Count 6=Median 7=StdDev 8=Variance
+            fn = {0: "Sum", 1: "Average", 2: "DistinctCount", 3: "Min", 4: "Max",
+                  5: "Count", 6: "Median", 7: "StdDev", 8: "Variance"}.get(
+                      a.get("Function"), str(a.get("Function")))
+            return "{}({}.{})".format(fn,
+                                      c["Expression"]["SourceRef"]["Entity"], c["Property"])
+        if "Column" in fld:
+            c = fld["Column"]
+            return "{}.{}".format(c["Expression"]["SourceRef"]["Entity"], c["Property"])
+    except (KeyError, TypeError):
+        pass
+    return fallback
+
+
 def visual(name: str, vtype: str, projections: dict, x: int, y: int,
            w: int, h: int, title: str = "") -> dict:
+    # PBIR 铁律:
+    #   1) 位置写在根层 position，不是 layouts —— visualContainer/2.0.0 里
+    #      layouts 属于 additionalProperties:false 之外的非法键，且 position 是 required
+    #   2) 每个 projection 必须带 queryRef（视觉内唯一字符串），否则 schema 不过
     state = {}
+    used = set()
     for role, items in projections.items():
-        state[role] = {"projections": items}
+        new_items = []
+        for i, it in enumerate(items):
+            it = dict(it)
+            base = "{}.{}".format(role, _ref_base(it, "f{}".format(i)))
+            qref = base
+            n = 2
+            while qref in used:          # 保证视觉内唯一
+                qref = "{}_{}".format(base, n)
+                n += 1
+            used.add(qref)
+            it["queryRef"] = qref
+            new_items.append(it)
+        state[role] = {"projections": new_items}
     objs = {}
     if title:
         objs = {"title": [{"properties": {"text": {"expr": {"Literal": {"Value": f"'{title}'"}}},
@@ -291,8 +367,7 @@ def visual(name: str, vtype: str, projections: dict, x: int, y: int,
     return {
         "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
         "name": name,
-        "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h,
-                                           "tabOrder": 0}}],
+        "position": {"x": x, "y": y, "z": 0, "width": w, "height": h, "tabOrder": 0},
         "visual": {
             "visualType": vtype,
             "query": {"queryState": state, "sortDefinition": {"sort": []}},
@@ -316,7 +391,8 @@ def build_report() -> None:
 
     # ---- 页1：结论摘要 ---------------------------------------------------
     vs = [
-        visual("v100", "textbox", {}, 0, 0, 1280, 90),
+        textbox("v100", 0, 0, 1280, 90, "一、结论摘要：合成因子到底行不行",
+                "184 只沪深300成分股 / 2020-04-03 ~ 2026-08-31 / 310 次周频调仓；左四张卡为核心指标，右侧为分档收益与逐年对比"),
         visual("v101", "card", {"Values": [meas_ref("fact_ic", "IC均值")]}, 0, 100, 240, 120,
                "中性化后 IC 均值"),
         visual("v102", "card", {"Values": [meas_ref("fact_ic", "IR(信息比率)")]}, 250, 100, 240, 120,
@@ -340,7 +416,8 @@ def build_report() -> None:
 
     # ---- 页2：分层回测 ---------------------------------------------------
     vs = [
-        visual("v200", "textbox", {}, 0, 0, 1280, 80),
+        textbox("v200", 0, 0, 1280, 80, "二、分层回测：五档分组净值曲线",
+                "按合成因子横截面排序分 Q1~Q5，等权持有、周频调仓；下表为各档年化 / 夏普 / 最大回撤"),
         visual("v201", "lineChart",
                {"Category": [col_ref("fact_group_return", "trade_date")],
                 "Y": [agg_ref("fact_group_return", "nav", 0)],
@@ -360,7 +437,8 @@ def build_report() -> None:
 
     # ---- 页3：个股强弱矩阵 -----------------------------------------------
     vs = [
-        visual("v300", "textbox", {}, 0, 0, 1280, 80),
+        textbox("v300", 0, 0, 1280, 80, "三、个股强弱：截面排名与历史轨迹",
+                "上表为最新交易日排名前列个股；下方折线可切换个股查看其排名随时间变化"),
         visual("v301", "tableEx",
                {"Values": [col_ref("dim_stock", "name"),
                            col_ref("dim_stock", "l1_name"),
@@ -381,7 +459,8 @@ def build_report() -> None:
 
     # ---- 页4：IC 诊断 ----------------------------------------------------
     vs = [
-        visual("v400", "textbox", {}, 0, 0, 1280, 80),
+        textbox("v400", 0, 0, 1280, 80, "四、因子诊断：四族因子 IC 分解",
+                "趋势动量 / 价值 / 低波 / 反转 四族的滚动 IC 与 IC 均值对比；注意趋势动量 IC 显著为负"),
         visual("v401", "lineChart",
                {"Category": [col_ref("fact_ic", "trade_date")],
                 "Y": [agg_ref("fact_ic", "ic_neutral_ma20", 0),
@@ -435,8 +514,15 @@ def build_report() -> None:
     # 注意：这里绝不能用旧版 Layout 格式（version/sections/activeSectionIndex），
     # 那是 PBIR-Legacy，与 definition/pages/ 新格式混用会直接报错打不开。
     with open(os.path.join(RP_DIR, "definition", "report.json"), "w", encoding="utf-8") as f:
+        # baseTheme 官方 schema 里 required = [name, reportVersionAtImport, type]
+        # 只写 name 会让 report.json 不过校验
         json.dump({"$schema": f"{SCHEMA}/report/3.1.0/schema.json",
-                   "themeCollection": {"baseTheme": {"name": "CY24SU06"}},
+                   "themeCollection": {"baseTheme": {
+                       "name": "CY24SU06",
+                       "type": "SharedResources",
+                       "reportVersionAtImport": {"visual": "2.0.0",
+                                                 "page": "2.0.0",
+                                                 "report": "3.1.0"}}},
                    "objects": {"section": [{"properties": {
                        "verticalAlignment": {"expr": {"Literal": {"Value": "'Top'"}}}}}]},
                    "settings": {"useStylableVisualContainerHeader": True,
@@ -451,13 +537,23 @@ def build_report() -> None:
     write_platform(RP_DIR, "Report")
 
     with open(os.path.join(RP_DIR, "definition.pbir"), "w", encoding="utf-8") as f:
-        json.dump({"$schema": f"{FABRIC}/report/definitionProperties/2.0.0/schema.json",
+        json.dump({"$schema": f"{FABRIC}/item/report/definitionProperties/2.0.0/schema.json",
                    "version": "4.0",
                    "datasetReference": {"byPath": {"path": f"../{PROJ}.SemanticModel"}}},
                   f, ensure_ascii=False, indent=2)
 
+    # .pbip 官方 schema = fabric/pbip/pbipProperties/1.0.0 (ItemShortcut)，铁律：
+    #   · $schema / version / artifacts 三项都是 required（$schema 极易漏）
+    #   · artifacts 每一项**只允许 report 键**，required=["report"]
+    #     —— 加 "semanticModel" 会直接报
+    #       "Property 'semanticModel' has not been defined and the schema does not
+    #        allow additional properties"
+    #     Desktop 靠 Report 里的 datasetReference.byPath 自己回找模型，不用在这里声明
+    #   · settings 只允许 enableAutoRecovery
     with open(os.path.join(ROOT, f"{PROJ}.pbip"), "w", encoding="utf-8") as f:
-        json.dump({"version": "1.0",
+        json.dump({"$schema": "https://developer.microsoft.com/json-schemas/"
+                              "fabric/pbip/pbipProperties/1.0.0/schema.json",
+                   "version": "1.0",
                    "artifacts": [{"report": {"path": f"{PROJ}.Report"}}],
                    "settings": {}}, f, ensure_ascii=False, indent=2)
 
