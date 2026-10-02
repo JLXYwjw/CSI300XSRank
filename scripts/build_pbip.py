@@ -26,6 +26,11 @@ CSV = os.path.join(ROOT, "data")
 PROJ = "CSI300XSRank"
 SCHEMA = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition"
 FABRIC = "https://developer.microsoft.com/json-schemas/fabric"
+# 手机布局：每个视觉一份 mobile.json，放 visuals/<name>/ 下（不是按页一份）
+# 官方文档：learn.microsoft.com/power-bi/developer/projects/projects-report
+# schema: fabric/item/report/definition/visualContainerMobileState/{ver}/schema.json
+#   required = ["$schema", "position"]；position.required = [x,y,width,height]
+MOB_SCHEMA = SCHEMA + "/visualContainerMobileState/2.0.0/schema.json"
 LOGICAL_ID = "6f9d2a41-83c7-4b0e-9e15-2c47d8a3f6b1"
 SM_DIR = os.path.join(ROOT, f"{PROJ}.SemanticModel")
 RP_DIR = os.path.join(ROOT, f"{PROJ}.Report")
@@ -461,6 +466,65 @@ def visual(name: str, vtype: str, projections: dict, x: int, y: int,
     return out
 
 
+# ── 手机布局（mobile.json）───────────────────────────────────────────────
+# 手机画布最大宽度 323pt（微软官方 best practices 原文：
+#   "323 pt is the maximum screen width on the mobile layout canvas"）
+# 官方最小推荐尺寸：
+#   XL 323x270  table / matrix / map
+#   L  323x180  面积图 / 折线 / 柱状 / 条形 / 散点 / 树状图
+#   M  323x100  slicer / textbox
+#   S  158x100  card / KPI（两个可并排，158*2+7=323）
+# 视觉之间留 8pt（微软建议 6~8pt）
+MOB_W       = 323
+MOB_GAP     = 8
+MOB_SIZE    = {"textbox": (323, 110), "card": (158, 100),
+               "tableEx": (323, 270), "slicer": (323, 100)}
+MOB_DEFAULT = (323, 180)
+
+
+def mobile_layout(vs_list: list) -> dict:
+    """按视觉类型映射官方标准尺寸纵向堆叠；card 两两并排。
+    返回 {visual_name: (x, y, w, h)}。"""
+    out, y, slot = {}, 0, None
+    for v in vs_list:
+        vt = v["visual"]["visualType"]
+        w, h = MOB_SIZE.get(vt, MOB_DEFAULT)
+        if vt == "card":
+            if slot is None:          # 占左半槽，等下一个 card 来配对
+                slot = (y, h)
+                out[v["name"]] = (0, y, w, h)
+                continue
+            sy, sh = slot             # 放右半槽 (323-158=165)，整行结束
+            out[v["name"]] = (MOB_W - w, sy, w, h)
+            y = sy + max(h, sh) + MOB_GAP
+            slot = None
+        else:
+            if slot is not None:      # 半行还挂着一个 card，先收尾再整行
+                y = slot[0] + slot[1] + MOB_GAP
+                slot = None
+            out[v["name"]] = (0, y, w, h)
+            y += h + MOB_GAP
+    return out
+
+
+def mobile_json(v: dict, pos: tuple, z: int) -> dict:
+    """逐视觉的手机布局文件。配色沿用桌面版 —— objects / visualContainerObjects
+    在 mobile schema 里同样是合法键，引用的是同一批 definitions。"""
+    x, y, w, h = pos
+    objs = v["visual"].get("objects") or {}
+    d = {"$schema": MOB_SCHEMA,
+         "position": {"x": x, "y": y, "z": z, "width": w, "height": h,
+                      "tabOrder": z}}
+    m_objs = {k: objs[k] for k in ("dataPoint", "labels", "calloutValue")
+              if k in objs}
+    if m_objs:
+        d["objects"] = m_objs
+    vco = v["visual"].get("visualContainerObjects")
+    if vco:
+        d["visualContainerObjects"] = vco
+    return d
+
+
 def build_report() -> None:
     pages_dir = os.path.join(RP_DIR, "definition", "pages")
     shutil.rmtree(RP_DIR, ignore_errors=True)
@@ -603,12 +667,19 @@ def build_report() -> None:
                        "height": 1080, "width": 1280,
                        "objects": _page_objects()},
                       f, ensure_ascii=False, indent=2)
-        for v in vs_list:
+        mlay = mobile_layout(vs_list)
+        for zi, v in enumerate(vs_list):
             vdir = os.path.join(pdir, "visuals", v["name"])
             os.makedirs(vdir, exist_ok=True)
             with open(os.path.join(vdir, "visual.json"), "w", encoding="utf-8") as f:
                 json.dump(v, f, ensure_ascii=False, indent=2)
-        print(f"  + pages/{pname}  ({len(vs_list)} 个视觉对象) - {display}")
+            # 手机布局：每个视觉一份 mobile.json。
+            # 报表级的 mobileState.json 微软文档明确写 "doesn't support
+            # external editing"，所以不手写，交给 Desktop 进入手机视图时自己生成。
+            with open(os.path.join(vdir, "mobile.json"), "w", encoding="utf-8") as f:
+                json.dump(mobile_json(v, mlay[v["name"]], zi),
+                          f, ensure_ascii=False, indent=2)
+        print(f"  + pages/{pname}  ({len(vs_list)} 个视觉 + 手机布局) - {display}")
 
     # ── definition/version.json：PBIR 格式版本，Desktop 读 Report 时第一个找的就是它 ──
     # 必须严格遵守 semver ^[0-9]*\.(0|[0-9]*)\.0$，写成 "4.0" 会被正则校验拦下。

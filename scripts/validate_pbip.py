@@ -290,6 +290,46 @@ for p in sorted(pages_dir.iterdir()):
                 pass
         print(f"      - {vt:<22} 占位 {qn}")
 
+# ---------- 4b. 手机布局 mobile.json ----------
+# 官方 schema 只约束 required 字段，对 x/width 只有文字描述（"should be between
+# 0 and width of the containing page"），没有 maximum —— 超宽不会被 schema 拦，
+# 必须自己查。手机画布最大宽度 323pt。
+print("\n[4b] 手机布局 mobile.json（画布宽 323pt）")
+MOB_W = 323
+for p in sorted((RPT / "definition" / "pages").glob("ReportSection*")):
+    vis = sorted((p / "visuals").glob("*/visual.json"))
+    boxes = []
+    missing = []
+    for v in vis:
+        vn = v.parent.name
+        mp = v.parent / "mobile.json"
+        if not mp.exists():
+            missing.append(vn)
+            continue
+        q = json.loads(mp.read_text(encoding="utf-8-sig")).get("position", {})
+        for k in ("x", "y", "width", "height"):     # position.required
+            if k not in q:
+                bad(f"{p.name}/{vn}/mobile.json 缺 position.{k}")
+                issues.append(f"mobile position.{k} missing")
+        if q.get("x", 0) < 0 or q.get("x", 0) + q.get("width", 0) > MOB_W:
+            bad(f"{p.name}/{vn} 超出手机画布宽度: x={q.get('x')} w={q.get('width')}")
+            issues.append(f"mobile overflow {vn}")
+        boxes.append((vn, q))
+    for i in range(len(boxes)):
+        for j in range(i + 1, len(boxes)):
+            an, a = boxes[i]
+            bn, b = boxes[j]
+            if (a["x"] < b["x"] + b["width"] and b["x"] < a["x"] + a["width"]
+                    and a["y"] < b["y"] + b["height"] and b["y"] < a["y"] + a["height"]):
+                bad(f"{p.name} 手机布局重叠: {an} <-> {bn}")
+                issues.append(f"mobile overlap {an}/{bn}")
+    if missing:
+        bad(f"{p.name} 有视觉缺 mobile.json: {missing}")
+        issues.append(f"mobile missing {missing}")
+    if boxes:
+        ymax = max(b["y"] + b["height"] for _, b in boxes)
+        print(f"   {p.name:<16} 视觉 {len(vis)} / mobile {len(boxes)}   页高 {ymax}")
+
 # ---------- 5. 数据源 CSV ----------
 print("\n[5] 数据源 CSV 与分区引用一致性")
 CSV = ROOT / "data"
