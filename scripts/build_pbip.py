@@ -282,6 +282,59 @@ def agg_ref(entity: str, prop: str, fn: str) -> dict:
         "Function": fn}}}
 
 
+# ── 配色与容器样式 ────────────────────────────────────────────────
+# 重要：官方 schema 里 ThemeMetadata 是 additionalProperties:false，
+# customTheme **不能**带 dataColors（写进去会直接打不开）。
+# 所以配色只能逐视觉指定：visualContainerObjects 做卡片底/边框，
+# objects.dataPoint.fill 做图形主色。
+PAGE_BG   = "#F1F5F9"   # 页背景：浅灰蓝
+PANEL_BG  = "#FFFFFF"   # 卡片底色
+PANEL_BD  = "#E2E8F0"   # 卡片边框（无强调色时）
+# 强调色 -> (主色, 浅色底)
+ACCENT = {
+    "blue":   ("#2563EB", "#EFF6FF"),
+    "violet": ("#7C3AED", "#F5F3FF"),
+    "amber":  ("#F59E0B", "#FFFBEB"),
+    "teal":   ("#14B8A6", "#F0FDFA"),
+    "rose":   ("#E11D48", "#FFF1F2"),
+    "green":  ("#059669", "#ECFDF5"),
+    "cyan":   ("#0891B2", "#ECFEFF"),
+    "orange": ("#EA580C", "#FFF7ED"),
+}
+
+
+def _lit(v: str) -> dict:
+    return {"expr": {"Literal": {"Value": v}}}
+
+
+def _solid(hexv: str) -> dict:
+    return {"solid": {"color": {"expr": {"Literal": {"Value": "'{}'".format(hexv)}}}}}
+
+
+def _container(bg: str, border: str) -> dict:
+    """visualContainerObjects：卡片底 + 圆角边框。
+    schema 里 background/border 都是 [{properties:{...}}]。"""
+    return {
+        "background": [{"properties": {
+            "show": _lit("true"),
+            "color": _solid(bg),
+            "transparency": _lit("0D")}}],
+        "border": [{"properties": {
+            "show": _lit("true"),
+            "color": _solid(border),
+            "radius": _lit("8D"),
+            "width": _lit("1D")}}],
+    }
+
+
+def _page_objects() -> dict:
+    """页背景。注意 schema 只允许 color / image / transparency 三个键，
+    没有 show —— 加了 show 会报 Additional properties are not allowed。"""
+    return {"background": [{"properties": {
+        "color": _solid(PAGE_BG),
+        "transparency": _lit("0D")}}]}
+
+
 def textbox(name: str, x: int, y: int, w: int, h: int,
             main: str, sub: str = "") -> dict:
     """textbox 视觉。objects 在 schema 里是自由格式(DataViewObjectDefinitions)，
@@ -339,11 +392,13 @@ def _ref_base(item: dict, fallback: str) -> str:
 
 
 def visual(name: str, vtype: str, projections: dict, x: int, y: int,
-           w: int, h: int, title: str = "") -> dict:
+           w: int, h: int, title: str = "", accent: str = "",
+           panel: bool = False, tint: str = "") -> dict:
     # PBIR 铁律:
-    #   1) 位置写在根层 position，不是 layouts —— visualContainer/2.0.0 里
-    #      layouts 属于 additionalProperties:false 之外的非法键，且 position 是 required
-    #   2) 每个 projection 必须带 queryRef（视觉内唯一字符串），否则 schema 不过
+    #   1) 位置写在根层 position，不是 layouts
+    #   2) 每个 projection 必须带 queryRef（视觉内唯一字符串）
+    # accent: ACCENT 的键名（blue/violet/...）。给定时该视觉用对应主色，
+    #         卡片类视觉同时用对应浅色做底 -> 每个视觉一眼能区分
     state = {}
     used = set()
     for role, items in projections.items():
@@ -360,11 +415,20 @@ def visual(name: str, vtype: str, projections: dict, x: int, y: int,
             it["queryRef"] = qref
             new_items.append(it)
         state[role] = {"projections": new_items}
+
     objs = {}
     if title:
-        objs = {"title": [{"properties": {"text": {"expr": {"Literal": {"Value": f"'{title}'"}}},
-                                          "show": {"expr": {"Literal": {"Value": "true"}}}}}]}
-    return {
+        objs["title"] = [{"properties": {
+            "text": {"expr": {"Literal": {"Value": "'{}'".format(title)}}},
+            "show": _lit("true"),
+            "fontColor": _solid("#0F172A"),
+            "fontSize": _lit("11D"),
+            "bold": _lit("true")}}]
+    main, light = ACCENT.get(accent, ("", ""))
+    if main:
+        objs["dataPoint"] = [{"properties": {"fill": _solid(main)}}]
+
+    out = {
         "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
         "name": name,
         "position": {"x": x, "y": y, "z": 0, "width": w, "height": h, "tabOrder": 0},
@@ -375,6 +439,12 @@ def visual(name: str, vtype: str, projections: dict, x: int, y: int,
             "drillFilterOtherVisuals": True,
         },
     }
+    if panel:
+        # visualContainerObjects 属于 visual 内部，不能放根层
+        # （放根层会报 Additional properties are not allowed）
+        out["visual"]["visualContainerObjects"] = _container(
+            tint or light or PANEL_BG, main or PANEL_BD)
+    return out
 
 
 def build_report() -> None:
@@ -390,89 +460,120 @@ def build_report() -> None:
     pages = []
 
     # ---- 页1：结论摘要 ---------------------------------------------------
+    # 视觉类型：textbox / card / 柱状图 / 面积图 / 条形图（5 种）
     vs = [
-        textbox("v100", 0, 0, 1280, 90, "一、结论摘要：合成因子到底行不行",
-                "184 只沪深300成分股 / 2020-04-03 ~ 2026-08-31 / 310 次周频调仓；左四张卡为核心指标，右侧为分档收益与逐年对比"),
-        visual("v101", "card", {"Values": [meas_ref("fact_ic", "IC均值")]}, 0, 100, 240, 120,
-               "中性化后 IC 均值"),
-        visual("v102", "card", {"Values": [meas_ref("fact_ic", "IR(信息比率)")]}, 250, 100, 240, 120,
-               "IR 信息比率"),
-        visual("v103", "card", {"Values": [meas_ref("fact_ic", "t值")]}, 500, 100, 240, 120,
-               "t 值 (显著=2以上)"),
+        textbox("v100", 0, 0, 1280, 78, "一、结论摘要：合成因子到底行不行",
+                "184 只沪深300成分股 / 2020-04-03 ~ 2026-08-31 / 310 次周频调仓 — "
+                "上方四张卡为核心指标，下方为分档收益、每日 IC 分布与单因子对比"),
+        visual("v101", "card", {"Values": [meas_ref("fact_ic", "IC均值")]},
+               0, 86, 313, 110, "中性化后 IC 均值", accent="blue", panel=True),
+        visual("v102", "card", {"Values": [meas_ref("fact_ic", "IR(信息比率)")]},
+               323, 86, 313, 110, "IR 信息比率", accent="violet", panel=True),
+        visual("v103", "card", {"Values": [meas_ref("fact_ic", "t值")]},
+               646, 86, 313, 110, "t 值 (显著=2以上)", accent="amber", panel=True),
         visual("v104", "card", {"Values": [meas_ref("fact_crosssection", "覆盖股票数")]},
-               750, 100, 240, 120, "覆盖股票数"),
-        visual("v105", "card", {"Values": [meas_ref("fact_crosssection", "截面样本行数")]},
-               1000, 100, 280, 120, "截面样本总数"),
-        visual("v106", "clusteredColumnChart",
+               969, 86, 311, 110, "覆盖股票数", accent="teal", panel=True),
+        visual("v105", "clusteredColumnChart",
                {"Category": [col_ref("summary_perf", "组合")],
-                "Y": [agg_ref("summary_perf", "年化收益", 0)]}, 0, 240, 640, 420,
-               "各分层组合年化收益"),
-        visual("v107", "clusteredColumnChart",
+                "Y": [agg_ref("summary_perf", "年化收益", 0)]},
+               0, 208, 626, 412, "各分层组合年化收益", accent="blue", panel=True),
+        visual("v106", "areaChart",
+               {"Category": [col_ref("fact_ic", "trade_date")],
+                "Y": [agg_ref("fact_ic", "ic_neutral", 0)]},
+               636, 208, 644, 412, "每日 IC 分布（行业中性）", accent="violet", panel=True),
+        visual("v107", "clusteredBarChart",
                {"Category": [col_ref("fact_ic_family", "signal_name")],
-                "Y": [agg_ref("fact_ic_family", "ic", 0)]}, 650, 240, 630, 420,
-               "单因子 IC 对比"),
+                "Y": [agg_ref("fact_ic_family", "ic", 0)]},
+               0, 630, 1280, 450, "单因子 IC 均值对比（负值=反向有效）",
+               accent="amber", panel=True),
     ]
     pages.append(("ReportSection1", "1 结论摘要", vs))
 
     # ---- 页2：分层回测 ---------------------------------------------------
+    # 视觉类型：textbox / 折线 / 散点 / 柱状 / 表格（5 种）
     vs = [
-        textbox("v200", 0, 0, 1280, 80, "二、分层回测：五档分组净值曲线",
-                "按合成因子横截面排序分 Q1~Q5，等权持有、周频调仓；下表为各档年化 / 夏普 / 最大回撤"),
+        textbox("v200", 0, 0, 1280, 78, "二、分层回测：五档分组净值曲线",
+                "按合成因子横截面排序分 Q1~Q5，等权持有、周频调仓 — "
+                "右上散点为风险收益定位（气泡大小=夏普），下方为夏普/回撤与绩效明细"),
         visual("v201", "lineChart",
                {"Category": [col_ref("fact_group_return", "trade_date")],
                 "Y": [agg_ref("fact_group_return", "nav", 0)],
-                "Series": [col_ref("fact_group_return", "group")]}, 0, 90, 1280, 380,
-               "净值走势：Q1 vs Q5 vs 基准"),
-        visual("v202", "tableEx",
+                "Series": [col_ref("fact_group_return", "group")]},
+               0, 86, 856, 424, "净值走势：Q1 vs Q5 vs 基准", panel=True),
+        visual("v202", "scatterChart",
+               {"Category": [col_ref("summary_perf", "组合")],
+                "X": [agg_ref("summary_perf", "年化波动", 0)],
+                "Y": [agg_ref("summary_perf", "年化收益", 0)],
+                "Size": [agg_ref("summary_perf", "夏普", 0)]},
+               866, 86, 414, 424, "风险收益定位（气泡=夏普）",
+               accent="teal", panel=True),
+        visual("v203", "clusteredColumnChart",
+               {"Category": [col_ref("summary_perf", "组合")],
+                "Y": [agg_ref("summary_perf", "夏普", 0),
+                      agg_ref("summary_perf", "最大回撤", 0)]},
+               0, 520, 620, 560, "夏普 与 最大回撤 对比", accent="rose", panel=True),
+        visual("v204", "tableEx",
                {"Values": [col_ref("summary_perf", "组合"),
                            col_ref("summary_perf", "最终净值"),
                            col_ref("summary_perf", "年化收益"),
                            col_ref("summary_perf", "年化超额"),
                            col_ref("summary_perf", "夏普"),
                            col_ref("summary_perf", "最大回撤"),
-                           col_ref("summary_perf", "胜率")]}, 0, 490, 1280, 560,
-               "回测绩效明细"),
+                           col_ref("summary_perf", "胜率")]},
+               630, 520, 650, 560, "回测绩效明细", accent="cyan", panel=True),
     ]
     pages.append(("ReportSection2", "2 分层回测", vs))
 
     # ---- 页3：个股强弱矩阵 -----------------------------------------------
+    # 视觉类型：textbox / 切片器 / 表格 / 折线 / 树状图（5 种，含交互筛选）
     vs = [
-        textbox("v300", 0, 0, 1280, 80, "三、个股强弱：截面排名与历史轨迹",
-                "上表为最新交易日排名前列个股；下方折线可切换个股查看其排名随时间变化"),
-        visual("v301", "tableEx",
+        textbox("v300", 0, 0, 1280, 78, "三、个股强弱：截面排名与历史轨迹",
+                "左侧切片器可按申万一级行业筛选整页 — "
+                "右上为个股强弱榜，下方为排名轨迹与行业覆盖分布"),
+        visual("v301", "slicer",
+               {"Values": [col_ref("dim_stock", "l1_name")]},
+               0, 86, 296, 424, "行业筛选（可多选）", accent="green", panel=True),
+        visual("v302", "tableEx",
                {"Values": [col_ref("dim_stock", "name"),
                            col_ref("dim_stock", "l1_name"),
                            meas_ref("fact_crosssection", "平均合成分"),
-                           meas_ref("fact_crosssection", "平均排名分位")]}, 0, 90, 420, 900,
-               "个股强弱榜"),
-        visual("v302", "lineChart",
+                           meas_ref("fact_crosssection", "平均排名分位")]},
+               306, 86, 974, 424, "个股强弱榜", accent="blue", panel=True),
+        visual("v303", "lineChart",
                {"Category": [col_ref("dim_date", "year_month")],
                 "Y": [agg_ref("fact_crosssection", "rank_pct_neutral", 0)],
-                "Series": [col_ref("dim_stock", "name")]}, 440, 90, 840, 440,
-               "排名分位轨迹"),
-        visual("v303", "clusteredBarChart",
+                "Series": [col_ref("dim_stock", "name")]},
+               0, 520, 626, 560, "排名分位轨迹", panel=True),
+        visual("v304", "treemap",
                {"Category": [col_ref("dim_stock", "l1_name")],
-                "Y": [meas_ref("fact_crosssection", "平均合成分")]}, 440, 550, 840, 440,
-               "行业平均强弱"),
+                "Values": [meas_ref("fact_crosssection", "覆盖股票数")]},
+               636, 520, 644, 560, "行业覆盖分布", accent="orange", panel=True),
     ]
     pages.append(("ReportSection3", "3 个股强弱", vs))
 
     # ---- 页4：IC 诊断 ----------------------------------------------------
+    # 视觉类型：textbox / 面积图 / 折线（4 条线）/ 表格（4 种）
     vs = [
-        textbox("v400", 0, 0, 1280, 80, "四、因子诊断：四族因子 IC 分解",
-                "趋势动量 / 价值 / 低波 / 反转 四族的滚动 IC 与 IC 均值对比；注意趋势动量 IC 显著为负"),
-        visual("v401", "lineChart",
+        textbox("v400", 0, 0, 1280, 74, "四、因子诊断：四族因子 IC 分解",
+                "趋势动量 / 价值 / 低波 / 反转 四族 — "
+                "上为滚动 IC，左下为四族时序（四条线），右下为族构成与逻辑"),
+        visual("v401", "areaChart",
                {"Category": [col_ref("fact_ic", "trade_date")],
                 "Y": [agg_ref("fact_ic", "ic_neutral_ma20", 0),
-                      agg_ref("fact_ic", "ic_style_ma20", 0)]}, 0, 90, 1280, 420,
-               "滚动20日 IC：行业中性 vs 未中性化"),
-        visual("v402", "tableEx",
+                      agg_ref("fact_ic", "ic_style_ma20", 0)]},
+               0, 84, 1280, 380, "滚动20日 IC：行业中性 vs 未中性化", panel=True),
+        visual("v402", "lineChart",
+               {"Category": [col_ref("fact_ic_family", "trade_date")],
+                "Y": [agg_ref("fact_ic_family", "ic_ma20", 0)],
+                "Series": [col_ref("fact_ic_family", "signal_name")]},
+               0, 474, 760, 606, "四族因子 IC 时序（20日滚动）", panel=True),
+        visual("v403", "tableEx",
                {"Values": [col_ref("dim_family", "family_name"),
                            col_ref("dim_family", "family_en"),
                            col_ref("dim_family", "n_features"),
                            col_ref("dim_family", "features"),
-                           col_ref("dim_family", "logic")]}, 0, 530, 1280, 480,
-               "因子族构成与逻辑"),
+                           col_ref("dim_family", "logic")]},
+               770, 474, 510, 606, "因子族构成与逻辑", accent="violet", panel=True),
     ]
     pages.append(("ReportSection4", "4 因子诊断", vs))
 
@@ -485,7 +586,8 @@ def build_report() -> None:
             json.dump({"$schema": f"{SCHEMA}/page/2.0.0/schema.json",
                        "name": pname, "displayName": display,
                        "displayOption": "FitToPage",
-                       "height": 1080, "width": 1280},
+                       "height": 1080, "width": 1280,
+                       "objects": _page_objects()},
                       f, ensure_ascii=False, indent=2)
         for v in vs_list:
             vdir = os.path.join(pdir, "visuals", v["name"])

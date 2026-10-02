@@ -6,7 +6,7 @@
     "y": 0,
     "z": 0,
     "width": 1280,
-    "height": 80,
+    "height": 78,
     "tabOrder": 0
   },
   "visual": {
@@ -49,7 +49,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "上表为最新交易日排名前列个股；下方折线可切换个股查看其排名随时间变化",
+                    "value": "左侧切片器可按申万一级行业筛选整页 — 右上为个股强弱榜，下方为排名轨迹与行业覆盖分布",
                     "textStyle": {
                       "fontFamily": "'Segoe UI','wf_standard-font','Arial',sans-serif",
                       "fontSize": "10pt",

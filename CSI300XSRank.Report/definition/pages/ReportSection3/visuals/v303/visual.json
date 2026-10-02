@@ -2,15 +2,15 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
   "name": "v303",
   "position": {
-    "x": 440,
-    "y": 550,
+    "x": 0,
+    "y": 520,
     "z": 0,
-    "width": 840,
-    "height": 440,
+    "width": 626,
+    "height": 560,
     "tabOrder": 0
   },
   "visual": {
-    "visualType": "clusteredBarChart",
+    "visualType": "lineChart",
     "query": {
       "queryState": {
         "Category": {
@@ -20,13 +20,13 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_stock"
+                      "Entity": "dim_date"
                     }
                   },
-                  "Property": "l1_name"
+                  "Property": "year_month"
                 }
               },
-              "queryRef": "Category.dim_stock.l1_name"
+              "queryRef": "Category.dim_date.year_month"
             }
           ]
         },
@@ -34,16 +34,38 @@
           "projections": [
             {
               "field": {
-                "Measure": {
+                "Aggregation": {
                   "Expression": {
-                    "SourceRef": {
-                      "Entity": "fact_crosssection"
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_crosssection"
+                        }
+                      },
+                      "Property": "rank_pct_neutral"
                     }
                   },
-                  "Property": "平均合成分"
+                  "Function": 0
                 }
               },
-              "queryRef": "Y.fact_crosssection.平均合成分"
+              "queryRef": "Y.Sum(fact_crosssection.rank_pct_neutral)"
+            }
+          ]
+        },
+        "Series": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_stock"
+                    }
+                  },
+                  "Property": "name"
+                }
+              },
+              "queryRef": "Series.dim_stock.name"
             }
           ]
         }
@@ -59,11 +81,36 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'行业平均强弱'"
+                  "Value": "'排名分位轨迹'"
                 }
               }
             },
             "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#0F172A'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "11D"
+                }
+              }
+            },
+            "bold": {
               "expr": {
                 "Literal": {
                   "Value": "true"
@@ -74,6 +121,77 @@
         }
       ]
     },
-    "drillFilterOtherVisuals": true
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "border": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E2E8F0'"
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            },
+            "width": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
   }
 }

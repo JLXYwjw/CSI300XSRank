@@ -6,7 +6,7 @@
     "y": 0,
     "z": 0,
     "width": 1280,
-    "height": 80,
+    "height": 74,
     "tabOrder": 0
   },
   "visual": {
@@ -49,7 +49,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "趋势动量 / 价值 / 低波 / 反转 四族的滚动 IC 与 IC 均值对比；注意趋势动量 IC 显著为负",
+                    "value": "趋势动量 / 价值 / 低波 / 反转 四族 — 上为滚动 IC，左下为四族时序（四条线），右下为族构成与逻辑",
                     "textStyle": {
                       "fontFamily": "'Segoe UI','wf_standard-font','Arial',sans-serif",
                       "fontSize": "10pt",

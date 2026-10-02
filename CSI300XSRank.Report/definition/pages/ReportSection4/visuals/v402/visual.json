@@ -3,82 +3,69 @@
   "name": "v402",
   "position": {
     "x": 0,
-    "y": 530,
+    "y": 474,
     "z": 0,
-    "width": 1280,
-    "height": 480,
+    "width": 760,
+    "height": 606,
     "tabOrder": 0
   },
   "visual": {
-    "visualType": "tableEx",
+    "visualType": "lineChart",
     "query": {
       "queryState": {
-        "Values": {
+        "Category": {
           "projections": [
             {
               "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_family"
+                      "Entity": "fact_ic_family"
                     }
                   },
-                  "Property": "family_name"
+                  "Property": "trade_date"
                 }
               },
-              "queryRef": "Values.dim_family.family_name"
-            },
+              "queryRef": "Category.fact_ic_family.trade_date"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_ic_family"
+                        }
+                      },
+                      "Property": "ic_ma20"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Y.Sum(fact_ic_family.ic_ma20)"
+            }
+          ]
+        },
+        "Series": {
+          "projections": [
             {
               "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_family"
+                      "Entity": "fact_ic_family"
                     }
                   },
-                  "Property": "family_en"
+                  "Property": "signal_name"
                 }
               },
-              "queryRef": "Values.dim_family.family_en"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "dim_family"
-                    }
-                  },
-                  "Property": "n_features"
-                }
-              },
-              "queryRef": "Values.dim_family.n_features"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "dim_family"
-                    }
-                  },
-                  "Property": "features"
-                }
-              },
-              "queryRef": "Values.dim_family.features"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "dim_family"
-                    }
-                  },
-                  "Property": "logic"
-                }
-              },
-              "queryRef": "Values.dim_family.logic"
+              "queryRef": "Series.fact_ic_family.signal_name"
             }
           ]
         }
@@ -94,11 +81,36 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'因子族构成与逻辑'"
+                  "Value": "'四族因子 IC 时序（20日滚动）'"
                 }
               }
             },
             "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#0F172A'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "11D"
+                }
+              }
+            },
+            "bold": {
               "expr": {
                 "Literal": {
                   "Value": "true"
@@ -109,6 +121,77 @@
         }
       ]
     },
-    "drillFilterOtherVisuals": true
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "border": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E2E8F0'"
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            },
+            "width": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
   }
 }

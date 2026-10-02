@@ -1,98 +1,84 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
-  "name": "v202",
+  "name": "v403",
   "position": {
-    "x": 866,
-    "y": 86,
+    "x": 770,
+    "y": 474,
     "z": 0,
-    "width": 414,
-    "height": 424,
+    "width": 510,
+    "height": 606,
     "tabOrder": 0
   },
   "visual": {
-    "visualType": "scatterChart",
+    "visualType": "tableEx",
     "query": {
       "queryState": {
-        "Category": {
+        "Values": {
           "projections": [
             {
               "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "summary_perf"
+                      "Entity": "dim_family"
                     }
                   },
-                  "Property": "组合"
+                  "Property": "family_name"
                 }
               },
-              "queryRef": "Category.summary_perf.组合"
-            }
-          ]
-        },
-        "X": {
-          "projections": [
+              "queryRef": "Values.dim_family.family_name"
+            },
             {
               "field": {
-                "Aggregation": {
+                "Column": {
                   "Expression": {
-                    "Column": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "summary_perf"
-                        }
-                      },
-                      "Property": "年化波动"
+                    "SourceRef": {
+                      "Entity": "dim_family"
                     }
                   },
-                  "Function": 0
+                  "Property": "family_en"
                 }
               },
-              "queryRef": "X.Sum(summary_perf.年化波动)"
-            }
-          ]
-        },
-        "Y": {
-          "projections": [
+              "queryRef": "Values.dim_family.family_en"
+            },
             {
               "field": {
-                "Aggregation": {
+                "Column": {
                   "Expression": {
-                    "Column": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "summary_perf"
-                        }
-                      },
-                      "Property": "年化收益"
+                    "SourceRef": {
+                      "Entity": "dim_family"
                     }
                   },
-                  "Function": 0
+                  "Property": "n_features"
                 }
               },
-              "queryRef": "Y.Sum(summary_perf.年化收益)"
-            }
-          ]
-        },
-        "Size": {
-          "projections": [
+              "queryRef": "Values.dim_family.n_features"
+            },
             {
               "field": {
-                "Aggregation": {
+                "Column": {
                   "Expression": {
-                    "Column": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "summary_perf"
-                        }
-                      },
-                      "Property": "夏普"
+                    "SourceRef": {
+                      "Entity": "dim_family"
                     }
                   },
-                  "Function": 0
+                  "Property": "features"
                 }
               },
-              "queryRef": "Size.Sum(summary_perf.夏普)"
+              "queryRef": "Values.dim_family.features"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_family"
+                    }
+                  },
+                  "Property": "logic"
+                }
+              },
+              "queryRef": "Values.dim_family.logic"
             }
           ]
         }
@@ -108,7 +94,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'风险收益定位（气泡=夏普）'"
+                  "Value": "'因子族构成与逻辑'"
                 }
               }
             },
@@ -155,7 +141,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#14B8A6'"
+                      "Value": "'#7C3AED'"
                     }
                   }
                 }
@@ -182,7 +168,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#F0FDFA'"
+                      "Value": "'#F5F3FF'"
                     }
                   }
                 }
@@ -213,7 +199,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#14B8A6'"
+                      "Value": "'#7C3AED'"
                     }
                   }
                 }

@@ -6,7 +6,7 @@
     "y": 0,
     "z": 0,
     "width": 1280,
-    "height": 80,
+    "height": 78,
     "tabOrder": 0
   },
   "visual": {
@@ -49,7 +49,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "按合成因子横截面排序分 Q1~Q5，等权持有、周频调仓；下表为各档年化 / 夏普 / 最大回撤",
+                    "value": "按合成因子横截面排序分 Q1~Q5，等权持有、周频调仓 — 右上散点为风险收益定位（气泡大小=夏普），下方为夏普/回撤与绩效明细",
                     "textStyle": {
                       "fontFamily": "'Segoe UI','wf_standard-font','Arial',sans-serif",
                       "fontSize": "10pt",

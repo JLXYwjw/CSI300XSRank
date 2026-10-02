@@ -6,7 +6,7 @@
     "y": 0,
     "z": 0,
     "width": 1280,
-    "height": 90,
+    "height": 78,
     "tabOrder": 0
   },
   "visual": {
@@ -49,7 +49,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "184 只沪深300成分股 / 2020-04-03 ~ 2026-08-31 / 310 次周频调仓；左四张卡为核心指标，右侧为分档收益与逐年对比",
+                    "value": "184 只沪深300成分股 / 2020-04-03 ~ 2026-08-31 / 310 次周频调仓 — 上方四张卡为核心指标，下方为分档收益、每日 IC 分布与单因子对比",
                     "textStyle": {
                       "fontFamily": "'Segoe UI','wf_standard-font','Arial',sans-serif",
                       "fontSize": "10pt",
