@@ -17,4 +17,3 @@ relationship rel_date_bt
 relationship rel_date_icf
 	fromColumn: fact_ic_family.trade_date
 	toColumn: dim_date.trade_date
-

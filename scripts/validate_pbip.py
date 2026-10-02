@@ -124,10 +124,14 @@ if not _indent_bad:
 
 # ---------- 3. 悬挂引用检测 ----------
 print("\n[3] 悬挂引用检测（关系 / 度量值引用的表列是否存在）")
-model_tmdl = (ROOT / "CSI300XSRank.SemanticModel" / "definition" / "model.tmdl")
+DEFDIR = ROOT / "CSI300XSRank.SemanticModel" / "definition"
+# 关系可能写在 model.tmdl 里，也可能被 Desktop 抽到 relationships.tmdl。
+# 两个地方都扫，谁有算谁（但它们**不能同时有**，见 [2c]）。
+rel_files = [p for p in (DEFDIR / "relationships.tmdl", DEFDIR / "model.tmdl") if p.exists()]
 rels = 0
-if model_tmdl.exists():
-    mt = model_tmdl.read_text(encoding="utf-8-sig")
+mt = "\n".join(p.read_text(encoding="utf-8-sig") for p in rel_files)
+if mt:
+    src = " + ".join(p.name for p in rel_files)
     for line in mt.splitlines():
         s = line.strip()
         if s.startswith("relationship "):
@@ -143,9 +147,30 @@ if model_tmdl.exists():
                     bad(f"关系引用未知表 {t}"); issues.append(f"rel unknown table {t}")
                 elif c not in tables[t]["cols"]:
                     bad(f"关系引用未知列 {t}.{c}"); issues.append(f"rel unknown col {t}.{c}")
-    print(f"   model.tmdl 中 relationship 共 {rels} 条")
+    print(f"   {src} 中 relationship 共 {rels} 条")
     if rels == 0:
         bad("没有任何关系"); issues.append("no relationship")
+
+# ---------- 2c. TMDL 对象重复声明（报错⑥ 的闸门） ----------
+# Desktop 另存时会把关系抽到 relationships.tmdl，却**不删** model.tmdl 里的旧副本。
+# 同一对象在两个文件里都声明了同名属性，下次打开直接报
+# "无法合并 TMDL 对象，因为两者声明了相同的属性: fromColumn"。
+# 官方 schema 校验抓不到这个（TMDL 不在 JSON schema 覆盖范围），必须自己查。
+print("\n[2c] TMDL 顶层对象重复声明检测")
+OBJ_RE = re.compile(r"^(relationship|table|model|database|expression|culture|partition)\s+([A-Za-z_0-9']+)")
+seen = {}
+for tf in sorted(DEFDIR.rglob("*.tmdl")):
+    for line in tf.read_text(encoding="utf-8-sig").splitlines():
+        m = OBJ_RE.match(line)
+        if m:
+            key = (m.group(1), m.group(2).strip("'"))
+            seen.setdefault(key, []).append(tf.relative_to(DEFDIR).as_posix())
+dups = {k: v for k, v in seen.items() if len(set(v)) > 1}
+for (kind, name), where in dups.items():
+    bad(f"{kind} '{name}' 在多个文件重复声明: {sorted(set(where))}")
+    issues.append(f"dup {kind} {name}")
+print(f"   扫描 {len(list(DEFDIR.rglob('*.tmdl')))} 个 tmdl 文件，"
+      f"顶层对象 {len(seen)} 个，重复 {len(dups)} 个")
 
 # DAX 引用检测
 all_cols = {t: v["cols"] for t, v in tables.items()}

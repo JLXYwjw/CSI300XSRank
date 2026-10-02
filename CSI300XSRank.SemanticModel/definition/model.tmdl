@@ -4,22 +4,3 @@ model CSI300XSRank
 	discourageImplicitMeasures: true
 	sourceQueryCulture: zh-CN
 
-relationship rel_stock_fact
-	fromColumn: fact_crosssection.ts_code
-	toColumn: dim_stock.ts_code
-
-relationship rel_date_fact
-	fromColumn: fact_crosssection.trade_date
-	toColumn: dim_date.trade_date
-
-relationship rel_date_ic
-	fromColumn: fact_ic.trade_date
-	toColumn: dim_date.trade_date
-
-relationship rel_date_bt
-	fromColumn: fact_group_return.trade_date
-	toColumn: dim_date.trade_date
-
-relationship rel_date_icf
-	fromColumn: fact_ic_family.trade_date
-	toColumn: dim_date.trade_date

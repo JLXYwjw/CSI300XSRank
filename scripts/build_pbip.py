@@ -255,12 +255,31 @@ def build_semantic_model() -> None:
         ("rel_date_bt", "fact_group_return.trade_date", "dim_date.trade_date"),
         ("rel_date_icf", "fact_ic_family.trade_date", "dim_date.trade_date"),
     ]
+    # 🚫🚫 关系必须单独写进 relationships.tmdl，不能再塞进 model.tmdl。
+    # Desktop 打开工程后另存时，会自己把关系抽到 definition/relationships.tmdl，
+    # 但**不会**删掉 model.tmdl 里的旧副本。于是同一个关系在两处都声明 fromColumn，
+    # 下次打开直接报（报错⑥，2026-10-02 10:10）：
+    #   无法合并 TMDL 对象，因为两者声明了相同的属性: fromColumn
+    #   第 1 个对象: 类型=Relationship，名称='rel_stock_fact'，路径='./model'
+    #   第 2 个对象: 类型=Relationship，名称='rel_stock_fact'，路径='./relationships'
+    rel_lines = []
     for name, frm, to in rels:
-        model += [f"relationship {name}", f"\tfromColumn: {frm}", f"\ttoColumn: {to}", ""]
+        rel_lines += [f"relationship {name}", f"\tfromColumn: {frm}",
+                      f"\ttoColumn: {to}", ""]
+    with open(os.path.join(SM_DIR, "definition", "relationships.tmdl"), "w",
+              encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(rel_lines))
+    print(f"  + relationships.tmdl  ({len(rels)} 条关系，单独文件，不要写进 model.tmdl)")
 
     with open(os.path.join(SM_DIR, "definition", "model.tmdl"), "w",
               encoding="utf-8", newline="\n") as f:
-        f.write("\n".join(model))
+        f.write("\n".join(model) + "\n")
+
+    # database.tmdl：Desktop 另存时会自己写这个文件（根对象 + compatibilityLevel）。
+    # 我们同样输出，保证脚本重新生成后磁盘状态与 Desktop 的规范一致。
+    with open(os.path.join(SM_DIR, "definition", "database.tmdl"), "w",
+              encoding="utf-8", newline="\n") as f:
+        f.write("database\n\tcompatibilityLevel: 1700\n")
 
     with open(os.path.join(SM_DIR, "definition", "cultures", "zh-CN.tmdl"), "w",
               encoding="utf-8", newline="\n") as f:
