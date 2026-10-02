@@ -292,14 +292,16 @@ PANEL_BG  = "#FFFFFF"   # 卡片底色
 PANEL_BD  = "#E2E8F0"   # 卡片边框（无强调色时）
 # 强调色 -> (主色, 浅色底)
 ACCENT = {
-    "blue":   ("#2563EB", "#EFF6FF"),
-    "violet": ("#7C3AED", "#F5F3FF"),
-    "amber":  ("#F59E0B", "#FFFBEB"),
-    "teal":   ("#14B8A6", "#F0FDFA"),
-    "rose":   ("#E11D48", "#FFF1F2"),
-    "green":  ("#059669", "#ECFDF5"),
-    "cyan":   ("#0891B2", "#ECFEFF"),
-    "orange": ("#EA580C", "#FFF7ED"),
+    # 强调色名 -> (主色, 卡片底色)。底色用 Tailwind 100 级，
+    # 50 级(#F0FDFA 那档)太淡，铺在卡片上肉眼几乎看不出差别。
+    "blue":   ("#2563EB", "#DBEAFE"),
+    "violet": ("#7C3AED", "#EDE9FE"),
+    "amber":  ("#F59E0B", "#FEF3C7"),
+    "teal":   ("#14B8A6", "#CCFBF1"),
+    "rose":   ("#E11D48", "#FFE4E6"),
+    "green":  ("#059669", "#D1FAE5"),
+    "cyan":   ("#0891B2", "#CFFAFE"),
+    "orange": ("#EA580C", "#FFEDD5"),
 }
 
 
@@ -427,6 +429,18 @@ def visual(name: str, vtype: str, projections: dict, x: int, y: int,
     main, light = ACCENT.get(accent, ("", ""))
     if main:
         objs["dataPoint"] = [{"properties": {"fill": _solid(main)}}]
+        if vtype == "card":
+            # 卡片大数字的颜色键名高度不确定：
+            #   旧版卡片 -> objects.labels.color
+            #   新版卡片 -> objects.calloutValue.{color|fontColor}
+            # 挖 DLL 也没拿到 ground truth（搜 calloutValue 零命中，全目录搜超时）。
+            # objects 在 schema 里是自由格式(DataViewObjectDefinitions 允许任意键)，
+            # 所以把 2 个对象名 x 2 个属性名共 4 种组合**全写上**：
+            # 正确的那个生效，错的被 Desktop 忽略，不会报错。
+            for obj_name in ("labels", "calloutValue"):
+                objs[obj_name] = [{"properties": {
+                    "color": _solid(main),
+                    "fontColor": _solid(main)}}]
 
     out = {
         "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
